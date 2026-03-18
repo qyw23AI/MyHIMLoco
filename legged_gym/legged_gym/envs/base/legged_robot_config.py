@@ -32,7 +32,7 @@ from .base_config import BaseConfig
 
 class LeggedRobotCfg(BaseConfig):
     class env:
-        num_envs = 4096
+        num_envs = 12288
         num_one_step_observations = 45
         num_observations = num_one_step_observations * 6
         num_one_step_privileged_obs = 45 + 3 + 3 + 187 # additional: base_lin_vel, external_forces, scan_dots
@@ -253,7 +253,7 @@ class LeggedRobotCfgPPO(BaseConfig):
         entropy_coef = 0.01
         num_learning_epochs = 5
         num_mini_batches = 4 # mini batch size = num_envs*nsteps / nminibatches
-        learning_rate = 1.e-3 #5.e-4
+        learning_rate = 3.e-3 #5.e-4
         schedule = 'adaptive' # could be adaptive, fixed
         gamma = 0.99
         lam = 0.95
@@ -267,7 +267,7 @@ class LeggedRobotCfgPPO(BaseConfig):
         max_iterations = 200000 # number of policy updates
 
         # logging
-        save_interval = 20 # check for potential saves every this many iterations
+        save_interval = 2000 # check for potential saves every this many iterations
         experiment_name = 'test'
         run_name = ''
         # load and resume

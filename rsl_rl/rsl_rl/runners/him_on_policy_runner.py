@@ -80,6 +80,11 @@ class HIMOnPolicyRunner:
         self.tot_timesteps = 0
         self.tot_time = 0
         self.current_learning_iteration = 0
+        
+        # Rolling checkpoint management (keep only last 3)
+        self.rolling_checkpoint_interval = 100
+        self.max_rolling_checkpoints = 3
+        self.rolling_checkpoint_files = []
 
         _, _ = self.env.reset()
     
@@ -144,8 +149,23 @@ class HIMOnPolicyRunner:
             learn_time = stop - start
             if self.log_dir is not None:
                 self.log(locals())
+            
+            # Rolling checkpoints: save every 100 iterations, keep only last 3
+            if it % self.rolling_checkpoint_interval == 0:
+                rolling_checkpoint_path = os.path.join(self.log_dir, 'model_latest_{}.pt'.format(it))
+                self.save(rolling_checkpoint_path)
+                self.rolling_checkpoint_files.append(rolling_checkpoint_path)
+                
+                # Remove oldest checkpoint if we have more than max_rolling_checkpoints
+                if len(self.rolling_checkpoint_files) > self.max_rolling_checkpoints:
+                    oldest_checkpoint = self.rolling_checkpoint_files.pop(0)
+                    if os.path.exists(oldest_checkpoint):
+                        os.remove(oldest_checkpoint)
+            
+            # Permanent checkpoints: save every save_interval (e.g., 5000) iterations
             if it % self.save_interval == 0:
                 self.save(os.path.join(self.log_dir, 'model_{}.pt'.format(it)))
+            
             ep_infos.clear()
         
         self.current_learning_iteration += num_learning_iterations
