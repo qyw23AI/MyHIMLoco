@@ -125,7 +125,7 @@ class MybotV2RoughCfg( LeggedRobotCfg ):
         soft_dof_pos_limit = 1. # percentage of urdf limits, values above this limit are penalized
         soft_dof_vel_limit = 1.
         soft_torque_limit = 1.
-        base_height_target = 0.38 #『CGT』从0.30·改到0.50，0.30时机器人小腿贴地 0.43
+        base_height_target = 0.38 #『CGT』从0.30·改到0.50，0.30时机器人小腿贴地 0.43，应该是body的质心
         max_contact_force = 100. # forces above this value are penalized
         clearance_height_target = -0.20
 
