@@ -32,7 +32,7 @@ from legged_gym.envs.base.legged_robot_config import LeggedRobotCfg, LeggedRobot
 
 class MybotV2RoughCfg( LeggedRobotCfg ):
     class init_state( LeggedRobotCfg.init_state ):
-        pos = [0.0, 0.0, 0.55] # x,y,z [m]
+        pos = [0.0, 0.0, 0.43] # x,y,z [m]
         default_joint_angles = { # = target angles [rad] when action = 0.0
             'FL_hip_joint': 0.1,   # [rad]
             'RL_hip_joint': 0.1,   # [rad]
@@ -40,9 +40,9 @@ class MybotV2RoughCfg( LeggedRobotCfg ):
             'RR_hip_joint': -0.1,   # [rad]
 
             'FL_thigh_joint': 0.8,     # [rad]
-            'RL_thigh_joint': 0.8,   # [rad]
+            'RL_thigh_joint': 1.0,   # [rad]
             'FR_thigh_joint': 0.8,     # [rad]
-            'RR_thigh_joint': 0.8,   # [rad]
+            'RR_thigh_joint': 1.0,   # [rad]
 
             'FL_calf_joint': -1.5,   # [rad]
             'RL_calf_joint': -1.5,    # [rad]
@@ -56,18 +56,18 @@ class MybotV2RoughCfg( LeggedRobotCfg ):
         stiffness = {
             'FL_hip': 40.0, 'FR_hip': 40.0, 'RL_hip': 40.0, 'RR_hip': 40.0,
             'FL_thigh': 40.0, 'FR_thigh': 40.0, 'RL_thigh': 40.0, 'RR_thigh': 40.0,
-            'FL_calf': 80.0, 'FR_calf': 80.0, 'RL_calf': 80.0, 'RR_calf': 80.0,
+            'FL_calf': 40.0, 'FR_calf': 40.0, 'RL_calf': 40.0, 'RR_calf': 40.0,
         }  # [N*m/rad]
         damping = {
             'FL_hip': 1.0, 'FR_hip': 1.0, 'RL_hip': 1.0, 'RR_hip': 1.0,
             'FL_thigh': 1.0, 'FR_thigh': 1.0, 'RL_thigh': 1.0, 'RR_thigh': 1.0,
-            'FL_calf': 2.0, 'FR_calf': 2.0, 'RL_calf': 2.0, 'RR_calf': 2.0,
+            'FL_calf': 1.0, 'FR_calf': 1.0, 'RL_calf': 1.0, 'RR_calf': 1.0,
         }      # [N*m*s/rad]
         # action scale: target angle = actionScale * action + defaultAngle
         action_scale = 0.25
         # decimation: Number of control action updates @ sim DT per policy DT
         decimation = 4
-        hip_reduction = 1.0
+        hip_reduction = 1.
 
     class commands( LeggedRobotCfg.commands ):
             curriculum = True
@@ -93,7 +93,7 @@ class MybotV2RoughCfg( LeggedRobotCfg ):
         armature = {
             'FL_hip': 0.01, 'FR_hip': 0.01, 'RL_hip': 0.01, 'RR_hip': 0.01,
             'FL_thigh': 0.01, 'FR_thigh': 0.01, 'RL_thigh': 0.01, 'RR_thigh': 0.01,
-            'FL_calf': 0.0544, 'FR_calf': 0.0544, 'RL_calf': 0.0544, 'RR_calf': 0.0544,
+            'FL_calf': 0.01, 'FR_calf': 0.01, 'RL_calf': 0.01, 'RR_calf': 0.01,
         }
 
     class rewards( LeggedRobotCfg.rewards ):
@@ -107,7 +107,7 @@ class MybotV2RoughCfg( LeggedRobotCfg ):
             dof_acc = -2.5e-7
             joint_power = -2e-5
             base_height = -1.0
-            foot_clearance = -0.01
+            foot_clearance = -0.05
             action_rate = -0.01
             smoothness = -0.01
             feet_air_time =  0.0
@@ -125,7 +125,7 @@ class MybotV2RoughCfg( LeggedRobotCfg ):
         soft_dof_pos_limit = 1. # percentage of urdf limits, values above this limit are penalized
         soft_dof_vel_limit = 1.
         soft_torque_limit = 1.
-        base_height_target = 0.38 #『CGT』从0.30·改到0.50，0.30时机器人小腿贴地 0.43，应该是body的质心
+        base_height_target = 0.32#『CGT』从0.30·改到0.50，0.30时机器人小腿贴地 0.43，应该是body的质心
         max_contact_force = 100. # forces above this value are penalized
         clearance_height_target = -0.20
 
