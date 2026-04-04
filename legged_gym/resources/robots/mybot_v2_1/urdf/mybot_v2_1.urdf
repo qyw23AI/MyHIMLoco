@@ -93,12 +93,12 @@
           rgba="1 1 1 1" />
       </material>
     </visual>
-    <collision>
+    <!-- <collision>
       <origin xyz="0.09 0 0" rpy="1.5707963 0 0" />
       <geometry>
         <cylinder length="0.05" radius="0.05" />
       </geometry>
-    </collision>
+    </collision> -->
   </link>
   <joint
     name="FL_hip_joint"
@@ -257,7 +257,7 @@
     </collision>
   </link>
   <joint
-    name="FL_foot_joint"
+    name="FL_foot_fixed"
     type="fixed">
     <origin
       xyz="0 -0.00025 -0.22336"
@@ -299,12 +299,12 @@
           rgba="1 1 1 1" />
       </material>
     </visual>
-    <collision>
+    <!-- <collision>
       <origin xyz="0.09 0 0" rpy="1.5707963 0 0" />
       <geometry>
         <cylinder length="0.05" radius="0.05" />
       </geometry>
-    </collision>
+    </collision> -->
   </link>
   <joint
     name="FR_hip_joint"
@@ -462,7 +462,7 @@
     </collision>
   </link>
   <joint
-    name="FR_foot_joint"
+    name="FR_foot_fixed"
     type="fixed">
     <origin
       xyz="0 0.00025000000001113 -0.223362537893242"
@@ -504,12 +504,12 @@
           rgba="1 1 1 1" />
       </material>
     </visual>
-    <collision>
+    <!-- <collision>
       <origin xyz="-0.09 0 0" rpy="1.5707963 0 0" />
       <geometry>
         <cylinder length="0.05" radius="0.05" />
       </geometry>
-    </collision>
+    </collision> -->
   </link>
   <joint
     name="RL_hip_joint"
@@ -665,7 +665,7 @@
     </collision>
   </link>
   <joint
-    name="RL_foot_joint"
+    name="RL_foot_fixed"
     type="fixed">
     <origin
       xyz="0 -0.000250000000010231 -0.223362537894357"
@@ -707,12 +707,12 @@
           rgba="1 1 1 1" />
       </material>
     </visual>
-    <collision>
+    <!-- <collision>
       <origin xyz="-0.09 0 0" rpy="1.5707963 0 0" />
       <geometry>
         <cylinder length="0.05" radius="0.05" />
       </geometry>
-    </collision>
+    </collision> -->
   </link>
   <joint
     name="RR_hip_joint"
@@ -869,7 +869,7 @@
     </collision>
   </link>
   <joint
-    name="RR_foot_joint"
+    name="RR_foot_fixed"
     type="fixed">
     <origin
       xyz="0 0.000250000000008521 -0.223362537894357"
