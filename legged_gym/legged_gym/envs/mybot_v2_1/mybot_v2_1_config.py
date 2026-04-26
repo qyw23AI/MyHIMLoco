@@ -76,8 +76,8 @@ class MybotV21RoughCfg( LeggedRobotCfg ):
             resampling_time = 10. # time before command are changed[s]
             heading_command = True # if true: compute ang vel command from heading error
             class ranges( LeggedRobotCfg.commands.ranges):
-                lin_vel_x = [-1.0, 1.0] # min max [m/s]
-                lin_vel_y = [-1.0, 1.0]   # min max [m/s]
+                lin_vel_x = [-.2, 0.2] # min max [m/s]
+                lin_vel_y = [-.2, .2]   # min max [m/s]
                 ang_vel_yaw = [-3.14, 3.14]    # min max [rad/s]
                 heading = [-3.14, 3.14]
 
@@ -99,18 +99,18 @@ class MybotV21RoughCfg( LeggedRobotCfg ):
     class rewards( LeggedRobotCfg.rewards ):
         class scales:
             termination = -0.0
-            tracking_lin_vel = 1.0
+            tracking_lin_vel = 2.0
             tracking_ang_vel = 0.5
             lin_vel_z = -2.0
             ang_vel_xy = -0.05
             orientation = -0.2
             dof_acc = -2.5e-7
             joint_power = -2e-5
-            base_height = -1.0
+            base_height = -2.0
             foot_clearance = -0.05
             action_rate = -0.01
-            smoothness = -0.01
-            feet_air_time =  0.0
+            smoothness = -0.5
+            feet_air_time =  0.05
             collision = -0.0
             feet_stumble = -0.0
             stand_still = -0.
@@ -119,15 +119,17 @@ class MybotV21RoughCfg( LeggedRobotCfg ):
             dof_pos_limits = -0.0
             dof_vel_limits = -0.0
             torque_limits = -0.0
+            hip_pos = -0.2
+            rear_thigh_pos = -0.2
 
         only_positive_rewards = False # if true negative total rewards are clipped at zero (avoids early termination problems)
         tracking_sigma = 0.25 # tracking reward = exp(-error^2/sigma)
         soft_dof_pos_limit = 1. # percentage of urdf limits, values above this limit are penalized
         soft_dof_vel_limit = 1.
         soft_torque_limit = 1.
-        base_height_target = 0.36#『CGT』从0.30·改到0.50，0.30时机器人小腿贴地 0.43，应该是body的质心
+        base_height_target = 0.33#『CGT』从0.30·改到0.50，0.30时机器人小腿贴地 0.43，应该是body的质心
         max_contact_force = 100. # forces above this value are penalized
-        clearance_height_target = -0.24
+        clearance_height_target = -0.20
 
 class MybotV21RoughCfgPPO( LeggedRobotCfgPPO ):
     class algorithm( LeggedRobotCfgPPO.algorithm ):

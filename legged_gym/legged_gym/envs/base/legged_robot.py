@@ -1231,3 +1231,15 @@ class LeggedRobot(BaseTask):
     def _reward_feet_contact_forces(self):
         # penalize high contact forces
         return torch.sum((torch.norm(self.contact_forces[:, self.feet_indices, :], dim=-1) -  self.cfg.rewards.max_contact_force).clip(min=0.), dim=1)
+
+    def _reward_hip_pos(self):
+        # Penalize hip joints deviating from default angles (to explicitly prevent outward splay)
+        if not hasattr(self, "hip_indices"):
+            self.hip_indices = [i for i, name in enumerate(self.dof_names) if "hip" in name.lower()]
+        return torch.sum(torch.square(self.dof_pos[:, self.hip_indices] - self.default_dof_pos[:, self.hip_indices]), dim=1)
+
+    def _reward_rear_thigh_pos(self):
+        # Penalize rear thigh joints deviating from default angles
+        if not hasattr(self, "rear_thigh_indices"):
+            self.rear_thigh_indices = [i for i, name in enumerate(self.dof_names) if "rl_thigh" in name.lower() or "rr_thigh" in name.lower()]
+        return torch.sum(torch.square(self.dof_pos[:, self.rear_thigh_indices] - self.default_dof_pos[:, self.rear_thigh_indices]), dim=1)
