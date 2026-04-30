@@ -33,6 +33,7 @@ import os
 from collections import deque
 import statistics
 
+import distutils.version
 from torch.utils.tensorboard import SummaryWriter
 import torch
 
