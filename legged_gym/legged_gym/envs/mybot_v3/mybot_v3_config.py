@@ -31,14 +31,14 @@ class MybotV3RoughCfg(LeggedRobotCfg):
         stiffness = {
             "FL_hip": 40.0, "FR_hip": 40.0, "RL_hip": 40.0, "RR_hip": 40.0,
             "FL_thigh": 40.0, "FR_thigh": 40.0, "RL_thigh": 40.0, "RR_thigh": 40.0,
-            "FL_calf": 80.0, "FR_calf": 80.0, "RL_calf": 80.0, "RR_calf": 80.0,
+            "FL_calf": 50.0, "FR_calf": 50.0, "RL_calf": 50.0, "RR_calf": 50.0,  # 调低小腿刚度
         }
         damping = {
             "FL_hip": 1.0, "FR_hip": 1.0, "RL_hip": 1.0, "RR_hip": 1.0,
             "FL_thigh": 1.0, "FR_thigh": 1.0, "RL_thigh": 1.0, "RR_thigh": 1.0,
-            "FL_calf": 2.0, "FR_calf": 2.0, "RL_calf": 2.0, "RR_calf": 2.0,
+            "FL_calf": 2.0, "FR_calf": 2.0, "RL_calf": 2.0, "RR_calf": 2.0,  # 保持阻尼不变
         }
-        action_scale = 0.25
+        action_scale = 0.2  # 调整动作幅度，使小腿运动更平稳
         decimation = 4
         hip_reduction = 1.0
 
