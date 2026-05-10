@@ -1132,6 +1132,10 @@ class LeggedRobot(BaseTask):
     def _reward_lin_vel_z(self):
         # Penalize z axis base linear velocity
         return torch.square(self.base_lin_vel[:, 2])
+
+    def _reward_lin_vel_y(self):
+        # Penalize y axis base linear velocity
+        return torch.square(self.base_lin_vel[:, 1])
     
     def _reward_ang_vel_xy(self):
         # Penalize xy axes base angular velocity

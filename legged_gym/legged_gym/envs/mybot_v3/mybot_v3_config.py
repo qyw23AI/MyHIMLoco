@@ -7,6 +7,9 @@ from legged_gym.envs.base.legged_robot_config import LeggedRobotCfg, LeggedRobot
 
 
 class MybotV3RoughCfg(LeggedRobotCfg):
+    class env(LeggedRobotCfg.env):
+        num_envs = 8192
+
     class init_state(LeggedRobotCfg.init_state):
         pos = [0.0, 0.0, 0.43]  # x,y,z [m]
         default_joint_angles = {
@@ -29,14 +32,14 @@ class MybotV3RoughCfg(LeggedRobotCfg):
     class control(LeggedRobotCfg.control):
         control_type = "P"
         stiffness = {
-            "FL_hip": 40.0, "FR_hip": 40.0, "RL_hip": 40.0, "RR_hip": 40.0,
-            "FL_thigh": 40.0, "FR_thigh": 40.0, "RL_thigh": 40.0, "RR_thigh": 40.0,
-            "FL_calf": 50.0, "FR_calf": 50.0, "RL_calf": 50.0, "RR_calf": 50.0,  # 调低小腿刚度
+            "FL_hip": 30.0, "FR_hip": 30.0, "RL_hip": 30.0, "RR_hip": 30.0,
+            "FL_thigh": 30.0, "FR_thigh": 30.0, "RL_thigh": 30.0, "RR_thigh": 30.0,
+            "FL_calf": 35.0, "FR_calf": 35.0, "RL_calf": 35.0, "RR_calf": 35.0,
         }
         damping = {
-            "FL_hip": 1.0, "FR_hip": 1.0, "RL_hip": 1.0, "RR_hip": 1.0,
-            "FL_thigh": 1.0, "FR_thigh": 1.0, "RL_thigh": 1.0, "RR_thigh": 1.0,
-            "FL_calf": 2.0, "FR_calf": 2.0, "RL_calf": 2.0, "RR_calf": 2.0,  # 保持阻尼不变
+            "FL_hip": 2.0, "FR_hip": 2.0, "RL_hip": 2.0, "RR_hip": 2.0,
+            "FL_thigh": 2.0, "FR_thigh": 2.0, "RL_thigh": 2.0, "RR_thigh": 2.0,
+            "FL_calf": 4.0, "FR_calf": 4.0, "RL_calf": 4.0, "RR_calf": 4.0,
         }
         action_scale = 0.2  # 调整动作幅度，使小腿运动更平稳
         decimation = 4
@@ -52,8 +55,11 @@ class MybotV3RoughCfg(LeggedRobotCfg):
         class ranges(LeggedRobotCfg.commands.ranges):
             lin_vel_x = [-0.2, 0.2]
             lin_vel_y = [-0.2, 0.2]
-            ang_vel_yaw = [-3.14, 3.14]
-            heading = [-3.14, 3.14]
+            ang_vel_yaw = [-1.0, 1.0]
+            heading = [-1.0, 1.0]
+
+    class terrain(LeggedRobotCfg.terrain):
+        stair_height_levels = [0.04, 0.06, 0.08, 0.10, 0.12, 0.14]
 
     class asset(LeggedRobotCfg.asset):
         file = "{LEGGED_GYM_ROOT_DIR}/resources/robots/mybot_v3/urdf/mybot_v3.urdf"
@@ -76,15 +82,16 @@ class MybotV3RoughCfg(LeggedRobotCfg):
             tracking_lin_vel = 2.0
             tracking_ang_vel = 0.5
             lin_vel_z = -2.0
-            ang_vel_xy = -0.05
-            orientation = -0.2
+            lin_vel_y = -0.2
+            ang_vel_xy = -0.1
+            orientation = -0.5
             dof_acc = -2.5e-7
             joint_power = -2e-5
             base_height = -2.0
             foot_clearance = -0.05
             action_rate = -0.01
             smoothness = -0.5
-            feet_air_time = 0.05
+            feet_air_time = 0.2
             collision = -0.0
             feet_stumble = -0.0
             stand_still = -0.0
@@ -93,8 +100,8 @@ class MybotV3RoughCfg(LeggedRobotCfg):
             dof_pos_limits = -0.0
             dof_vel_limits = -0.0
             torque_limits = -0.0
-            hip_pos = -0.2
-            rear_thigh_pos = -0.2
+            hip_pos = -0.05
+            rear_thigh_pos = -0.05
 
         only_positive_rewards = False
         tracking_sigma = 0.25
@@ -109,7 +116,10 @@ class MybotV3RoughCfg(LeggedRobotCfg):
 class MybotV3RoughCfgPPO(LeggedRobotCfgPPO):
     class algorithm(LeggedRobotCfgPPO.algorithm):
         entropy_coef = 0.01
+        learning_rate = 5e-4
+        num_mini_batches = 8
 
     class runner(LeggedRobotCfgPPO.runner):
         run_name = ""
         experiment_name = "rough_mybot_v3"
+        num_steps_per_env = 64

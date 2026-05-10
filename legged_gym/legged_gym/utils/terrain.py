@@ -88,7 +88,7 @@ class Terrain:
                 difficulty = i / self.cfg.num_rows
                 choice = j / self.cfg.num_cols + 0.001
 
-                terrain = self.make_terrain(choice, difficulty)
+                terrain = self.make_terrain(choice, difficulty, curriculum_level=i + 1)
                 self.add_terrain_to_map(terrain, i, j)
 
     def selected_terrain(self):
@@ -106,7 +106,7 @@ class Terrain:
             eval(terrain_type)(terrain, **self.cfg.terrain_kwargs.terrain_kwargs)
             self.add_terrain_to_map(terrain, i, j)
     
-    def make_terrain(self, choice, difficulty):
+    def make_terrain(self, choice, difficulty, curriculum_level=None):
         terrain = terrain_utils.SubTerrain(   "terrain",
                                 width=self.width_per_env_pixels,
                                 length=self.width_per_env_pixels,
@@ -115,6 +115,10 @@ class Terrain:
         slope = difficulty * 0.4
         amplitude = 0.01 + 0.07 * difficulty
         step_height = 0.05 + 0.18 * difficulty
+        if curriculum_level is not None and getattr(self.cfg, "stair_height_levels", None):
+            levels = self.cfg.stair_height_levels
+            if 1 <= curriculum_level <= len(levels):
+                step_height = levels[curriculum_level - 1]
         discrete_obstacles_height = 0.05 + difficulty * 0.1
         stepping_stones_size = 1.5 * (1.05 - difficulty)
         stone_distance = 0.05 if difficulty==0 else 0.1

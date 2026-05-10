@@ -15,6 +15,17 @@ Notes:
 - `--num_envs` and `--max_iterations` override defaults from config.
 - The runner is HIMOnPolicyRunner and algorithm is HIMPPO (HIMLoco PPO variant).
 
+## How to play the trained policy
+From repo root:
+
+```bash
+python legged_gym/legged_gym/scripts/play.py --task mybot_v3 --load_run May04_18-17-50_ --checkpoint 1000
+```
+
+Notes:
+- `--load_run` is the run folder name under `legged_gym/logs/rough_mybot_v3/`.
+- `--checkpoint -1` loads the latest checkpoint in that run.
+
 ## Runtime estimate (cannot be verified without hardware)
 Current total env-steps:
 
