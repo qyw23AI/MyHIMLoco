@@ -81,17 +81,17 @@ class MybotV3RoughCfg(LeggedRobotCfg):
             termination = -0.0
             tracking_lin_vel = 2.0
             tracking_ang_vel = 0.5
-            lin_vel_z = -2.0
+            lin_vel_z = -1.5
             lin_vel_y = -0.2
-            ang_vel_xy = -0.1
-            orientation = -0.2
+            ang_vel_xy = -0.05
+            orientation = -0.15
             dof_acc = -2.5e-7
             joint_power = -2e-5
             base_height = -2.0
             foot_clearance = -0.05
             action_rate = -0.01
             smoothness = -0.05
-            feet_air_time = 0.15
+            feet_air_time = 0.25
             collision = -0.0
             feet_stumble = -0.0
             stand_still = -0.0
@@ -110,7 +110,7 @@ class MybotV3RoughCfg(LeggedRobotCfg):
         soft_torque_limit = 1.0
         base_height_target = 0.33
         max_contact_force = 100.0
-        clearance_height_target = -0.20
+        clearance_height_target = -0.1
 
 
 class MybotV3RoughCfgPPO(LeggedRobotCfgPPO):
