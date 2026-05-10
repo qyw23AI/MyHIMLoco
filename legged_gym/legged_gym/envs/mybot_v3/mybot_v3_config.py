@@ -32,9 +32,9 @@ class MybotV3RoughCfg(LeggedRobotCfg):
     class control(LeggedRobotCfg.control):
         control_type = "P"
         stiffness = {
-            "FL_hip": 30.0, "FR_hip": 30.0, "RL_hip": 30.0, "RR_hip": 30.0,
-            "FL_thigh": 30.0, "FR_thigh": 30.0, "RL_thigh": 30.0, "RR_thigh": 30.0,
-            "FL_calf": 35.0, "FR_calf": 35.0, "RL_calf": 35.0, "RR_calf": 35.0,
+            "FL_hip": 40.0, "FR_hip": 40.0, "RL_hip": 40.0, "RR_hip": 40.0,
+            "FL_thigh": 40.0, "FR_thigh": 40.0, "RL_thigh": 40.0, "RR_thigh": 40.0,
+            "FL_calf": 50.0, "FR_calf": 50.0, "RL_calf": 50.0, "RR_calf": 50.0,
         }
         damping = {
             "FL_hip": 2.0, "FR_hip": 2.0, "RL_hip": 2.0, "RR_hip": 2.0,
@@ -84,14 +84,14 @@ class MybotV3RoughCfg(LeggedRobotCfg):
             lin_vel_z = -2.0
             lin_vel_y = -0.2
             ang_vel_xy = -0.1
-            orientation = -0.5
+            orientation = -0.2
             dof_acc = -2.5e-7
             joint_power = -2e-5
             base_height = -2.0
             foot_clearance = -0.05
             action_rate = -0.01
-            smoothness = -0.5
-            feet_air_time = 0.2
+            smoothness = -0.05
+            feet_air_time = 0.15
             collision = -0.0
             feet_stumble = -0.0
             stand_still = -0.0
