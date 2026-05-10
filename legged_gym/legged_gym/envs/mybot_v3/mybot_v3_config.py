@@ -39,7 +39,7 @@ class MybotV3RoughCfg(LeggedRobotCfg):
         damping = {
             "FL_hip": 2.0, "FR_hip": 2.0, "RL_hip": 2.0, "RR_hip": 2.0,
             "FL_thigh": 2.0, "FR_thigh": 2.0, "RL_thigh": 2.0, "RR_thigh": 2.0,
-            "FL_calf": 4.0, "FR_calf": 4.0, "RL_calf": 4.0, "RR_calf": 4.0,
+            "FL_calf": 3.0, "FR_calf": 3.0, "RL_calf": 3.0, "RR_calf": 3.0,
         }
         action_scale = 0.2  # 调整动作幅度，使小腿运动更平稳
         decimation = 4
@@ -81,17 +81,17 @@ class MybotV3RoughCfg(LeggedRobotCfg):
             termination = -0.0
             tracking_lin_vel = 2.0
             tracking_ang_vel = 0.5
-            lin_vel_z = -1.5
+            lin_vel_z = -2.0
             lin_vel_y = -0.2
             ang_vel_xy = -0.05
-            orientation = -0.15
+            orientation = -0.2
             dof_acc = -2.5e-7
             joint_power = -2e-5
-            base_height = -2.0
-            foot_clearance = -0.05
+            base_height = -1.0
+            foot_clearance = -0.01
             action_rate = -0.01
             smoothness = -0.05
-            feet_air_time = 0.25
+            feet_air_time = 0.15
             collision = -0.0
             feet_stumble = -0.0
             stand_still = -0.0
@@ -110,7 +110,7 @@ class MybotV3RoughCfg(LeggedRobotCfg):
         soft_torque_limit = 1.0
         base_height_target = 0.33
         max_contact_force = 100.0
-        clearance_height_target = -0.1
+        clearance_height_target = -0.2
 
 
 class MybotV3RoughCfgPPO(LeggedRobotCfgPPO):
