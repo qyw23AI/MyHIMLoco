@@ -59,7 +59,7 @@ class MybotV3RoughCfg(LeggedRobotCfg):
             heading = [-1.0, 1.0]
 
     class terrain(LeggedRobotCfg.terrain):
-        stair_height_levels = [0.04, 0.06, 0.08, 0.10, 0.12, 0.14]
+        stair_height_levels = [0.015, 0.03, 0.045, 0.06, 0.075, 0.09, 0.105, 0.12, 0.135, 0.15]
 
     class asset(LeggedRobotCfg.asset):
         file = "{LEGGED_GYM_ROOT_DIR}/resources/robots/mybot_v3/urdf/mybot_v3.urdf"
