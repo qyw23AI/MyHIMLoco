@@ -11,6 +11,13 @@ From repo root:
 python legged_gym/legged_gym/scripts/train.py --task mybot_v3 --headless --rl_device cuda:0 --num_envs 4096 --max_iterations 5000
 ```
 
+## Resume training from model_700.pt
+From repo root:
+
+```bash
+python legged_gym/legged_gym/scripts/train.py --task mybot_v3 --resume --load_run May10_12-18-51_ --checkpoint 700
+```
+
 Notes:
 - `--num_envs` and `--max_iterations` override defaults from config.
 - The runner is HIMOnPolicyRunner and algorithm is HIMPPO (HIMLoco PPO variant).
