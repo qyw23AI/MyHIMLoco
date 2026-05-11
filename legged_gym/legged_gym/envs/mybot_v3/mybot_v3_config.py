@@ -79,7 +79,7 @@ class MybotV3RoughCfg(LeggedRobotCfg):
     class rewards(LeggedRobotCfg.rewards):
         class scales:
             termination = -0.0
-            tracking_lin_vel = 2.0
+            tracking_lin_vel = 1.7
             tracking_ang_vel = 0.5
             lin_vel_z = -2.0
             lin_vel_y = -0.2
@@ -90,8 +90,8 @@ class MybotV3RoughCfg(LeggedRobotCfg):
             base_height = -1.0
             foot_clearance = -0.01
             action_rate = -0.01
-            smoothness = -0.05
-            feet_air_time = 0.15
+            smoothness = -0.025
+            feet_air_time = 0.20
             collision = -0.0
             feet_stumble = -0.0
             stand_still = -0.0
@@ -100,8 +100,8 @@ class MybotV3RoughCfg(LeggedRobotCfg):
             dof_pos_limits = -0.0
             dof_vel_limits = -0.0
             torque_limits = -0.0
-            hip_pos = -0.05
-            rear_thigh_pos = -0.05
+            hip_pos = -0.03
+            rear_thigh_pos = -0.03
 
         only_positive_rewards = False
         tracking_sigma = 0.25
@@ -110,7 +110,7 @@ class MybotV3RoughCfg(LeggedRobotCfg):
         soft_torque_limit = 1.0
         base_height_target = 0.33
         max_contact_force = 100.0
-        clearance_height_target = -0.2
+        clearance_height_target = -0.18
 
 
 class MybotV3RoughCfgPPO(LeggedRobotCfgPPO):
