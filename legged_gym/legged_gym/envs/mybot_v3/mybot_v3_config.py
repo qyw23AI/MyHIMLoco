@@ -8,7 +8,7 @@ from legged_gym.envs.base.legged_robot_config import LeggedRobotCfg, LeggedRobot
 
 class MybotV3RoughCfg(LeggedRobotCfg):
     class env(LeggedRobotCfg.env):
-        num_envs = 8192
+        num_envs = 4096
 
     class init_state(LeggedRobotCfg.init_state):
         pos = [0.0, 0.0, 0.43]  # x,y,z [m]
@@ -114,12 +114,24 @@ class MybotV3RoughCfg(LeggedRobotCfg):
 
 
 class MybotV3RoughCfgPPO(LeggedRobotCfgPPO):
+    class policy(LeggedRobotCfgPPO.policy):
+
+        # 降低 exploration
+        init_noise_std = 0.5
+
+        actor_hidden_dims = [512, 256, 128]
+        critic_hidden_dims = [512, 256, 128]
+
+        activation = 'elu'
+
     class algorithm(LeggedRobotCfgPPO.algorithm):
         entropy_coef = 0.01
-        learning_rate = 5e-4
+        learning_rate = 3e-4
         num_mini_batches = 8
-
+        
+        # 关闭 adaptive PPO
+        schedule = 'fixed'
     class runner(LeggedRobotCfgPPO.runner):
         run_name = ""
         experiment_name = "rough_mybot_v3"
-        num_steps_per_env = 64
+        num_steps_per_env = 200
