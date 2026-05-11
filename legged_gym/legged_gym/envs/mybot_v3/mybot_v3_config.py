@@ -79,7 +79,7 @@ class MybotV3RoughCfg(LeggedRobotCfg):
     class rewards(LeggedRobotCfg.rewards):
         class scales:
             termination = -0.0
-            tracking_lin_vel = 1.7
+            tracking_lin_vel = 1.5
             tracking_ang_vel = 0.5
             lin_vel_z = -2.0
             lin_vel_y = -0.2
@@ -90,7 +90,7 @@ class MybotV3RoughCfg(LeggedRobotCfg):
             base_height = -1.0
             foot_clearance = -0.01
             action_rate = -0.01
-            smoothness = -0.025
+            smoothness = -0.02
             feet_air_time = 0.20
             collision = -0.0
             feet_stumble = -0.0
@@ -127,7 +127,7 @@ class MybotV3RoughCfgPPO(LeggedRobotCfgPPO):
     class algorithm(LeggedRobotCfgPPO.algorithm):
         entropy_coef = 0.01
         learning_rate = 3e-4
-        num_mini_batches = 8
+        num_mini_batches = 4
         
         # 关闭 adaptive PPO
         schedule = 'fixed'
