@@ -47,7 +47,7 @@ class MybotV3RoughCfg(LeggedRobotCfg):
 
     class commands(LeggedRobotCfg.commands):
         curriculum = True
-        max_curriculum = 1.0
+        max_curriculum = 2.0
         num_commands = 4
         resampling_time = 10.0
         heading_command = True
@@ -101,7 +101,7 @@ class MybotV3RoughCfg(LeggedRobotCfg):
             dof_vel_limits = -0.0
             torque_limits = -0.0
             hip_pos = -0.1
-            rear_thigh_pos = -0.01
+            rear_thigh_pos = 0.0 #关闭后腿大腿位置奖励
 
         only_positive_rewards = False
         tracking_sigma = 0.25
