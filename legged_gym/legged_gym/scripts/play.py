@@ -42,7 +42,7 @@ import torch
 def play(args, x_vel=1.0, y_vel=0.0, yaw_vel=0.0):
     env_cfg, train_cfg = task_registry.get_cfgs(name=args.task)
     # override some parameters for testing
-    env_cfg.env.num_envs = min(env_cfg.env.num_envs, 15)
+    env_cfg.env.num_envs = min(env_cfg.env.num_envs, 10)
     env_cfg.terrain.num_rows = 8
     env_cfg.terrain.num_cols = 4
     env_cfg.terrain.curriculum = True
@@ -53,7 +53,7 @@ def play(args, x_vel=1.0, y_vel=0.0, yaw_vel=0.0):
     env_cfg.domain_rand.disturbance = False
     env_cfg.domain_rand.randomize_payload_mass = False
     env_cfg.commands.heading_command = False
-    # env_cfg.terrain.mesh_type = 'plane'
+    env_cfg.terrain.mesh_type = 'plane'
     # prepare environment
     env, _ = task_registry.make_env(name=args.task, args=args, env_cfg=env_cfg)
     env.commands[:, 0] = x_vel

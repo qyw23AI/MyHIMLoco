@@ -41,13 +41,13 @@ class MybotV3RoughCfg(LeggedRobotCfg):
             "FL_thigh": 2.0, "FR_thigh": 2.0, "RL_thigh": 2.0, "RR_thigh": 2.0,
             "FL_calf": 3.0, "FR_calf": 3.0, "RL_calf": 3.0, "RR_calf": 3.0,
         }
-        action_scale = 0.2  # 调整动作幅度，使小腿运动更平稳
+        action_scale = 0.25  # 调整动作幅度，使小腿运动更平稳
         decimation = 4
         hip_reduction = 1.0
 
     class commands(LeggedRobotCfg.commands):
         curriculum = True
-        max_curriculum = 2.0
+        max_curriculum = 1.0
         num_commands = 4
         resampling_time = 10.0
         heading_command = True
@@ -59,7 +59,7 @@ class MybotV3RoughCfg(LeggedRobotCfg):
             heading = [-1.0, 1.0]
 
     class terrain(LeggedRobotCfg.terrain):
-        stair_height_levels = [0.015, 0.03, 0.045, 0.06, 0.075, 0.09, 0.105, 0.12, 0.135, 0.15]
+        stair_height_levels = [0.02, 0.04, 0.06, 0.08, 0.09, 0.10, 0.105, 0.11, 0.12, 0.13]
 
     class asset(LeggedRobotCfg.asset):
         file = "{LEGGED_GYM_ROOT_DIR}/resources/robots/mybot_v3/urdf/mybot_v3.urdf"
@@ -79,10 +79,10 @@ class MybotV3RoughCfg(LeggedRobotCfg):
     class rewards(LeggedRobotCfg.rewards):
         class scales:
             termination = -0.0
-            tracking_lin_vel = 1.5
+            tracking_lin_vel = 1.2
             tracking_ang_vel = 0.5
             lin_vel_z = -2.0
-            lin_vel_y = -0.2
+            lin_vel_y = -0.1
             ang_vel_xy = -0.05
             orientation = -0.2
             dof_acc = -2.5e-7
@@ -100,8 +100,8 @@ class MybotV3RoughCfg(LeggedRobotCfg):
             dof_pos_limits = -0.0
             dof_vel_limits = -0.0
             torque_limits = -0.0
-            hip_pos = -0.03
-            rear_thigh_pos = -0.03
+            hip_pos = -0.1
+            rear_thigh_pos = -0.01
 
         only_positive_rewards = False
         tracking_sigma = 0.25
@@ -110,7 +110,7 @@ class MybotV3RoughCfg(LeggedRobotCfg):
         soft_torque_limit = 1.0
         base_height_target = 0.33
         max_contact_force = 100.0
-        clearance_height_target = -0.18
+        clearance_height_target = -0.19
 
 
 class MybotV3RoughCfgPPO(LeggedRobotCfgPPO):
