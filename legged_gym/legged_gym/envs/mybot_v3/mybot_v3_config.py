@@ -32,9 +32,23 @@ class MybotV3RoughCfg(LeggedRobotCfg):
     class control(LeggedRobotCfg.control):
         control_type = "P"
         stiffness = {
-            "FL_hip": 40.0, "FR_hip": 40.0, "RL_hip": 40.0, "RR_hip": 40.0,
-            "FL_thigh": 40.0, "FR_thigh": 40.0, "RL_thigh": 40.0, "RR_thigh": 40.0,
-            "FL_calf": 50.0, "FR_calf": 50.0, "RL_calf": 50.0, "RR_calf": 50.0,
+            # hip：略降低，减少 lateral splay（外摆）
+            "FL_hip": 35.0,
+            "FR_hip": 35.0,
+            "RL_hip": 35.0,
+            "RR_hip": 35.0,
+
+            # thigh：保持主要支撑能力
+            "FL_thigh": 40.0,
+            "FR_thigh": 40.0,
+            "RL_thigh": 40.0,
+            "RR_thigh": 40.0,
+
+            # calf：降低刚度，提高地形顺应性
+            "FL_calf": 35.0,
+            "FR_calf": 35.0,
+            "RL_calf": 35.0,
+            "RR_calf": 35.0,
         }
         damping = {
             "FL_hip": 2.0, "FR_hip": 2.0, "RL_hip": 2.0, "RR_hip": 2.0,
