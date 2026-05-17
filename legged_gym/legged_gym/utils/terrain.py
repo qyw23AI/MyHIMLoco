@@ -115,12 +115,7 @@ class Terrain:
         slope = difficulty * 0.4
         amplitude = 0.01 + 0.07 * difficulty
         step_height = 0.05 + 0.18 * difficulty
-        if curriculum_level is not None and getattr(self.cfg, "stair_height_levels", None):
-            levels = self.cfg.stair_height_levels
-            level_index = (curriculum_level - 1) // 10
-            if level_index >= len(levels):
-                level_index = len(levels) - 1
-            step_height = levels[level_index]
+ 
         discrete_obstacles_height = 0.05 + difficulty * 0.1
         stepping_stones_size = 1.5 * (1.05 - difficulty)
         stone_distance = 0.05 if difficulty==0 else 0.1

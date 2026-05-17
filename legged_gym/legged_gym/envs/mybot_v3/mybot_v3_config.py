@@ -11,7 +11,7 @@ class MybotV3RoughCfg(LeggedRobotCfg):
         num_envs = 4096
 
     class init_state(LeggedRobotCfg.init_state):
-        pos = [0.0, 0.0, 0.43]  # x,y,z [m]
+        pos = [0.0, 0.0, 0.36]  # x,y,z [m]
         default_joint_angles = {
             "FL_hip_joint": 0.1,
             "RL_hip_joint": 0.1,
@@ -23,37 +23,35 @@ class MybotV3RoughCfg(LeggedRobotCfg):
             "FR_thigh_joint": 0.8,
             "RR_thigh_joint": 1.0,
 
-            "FL_calf_joint": -1.5,
-            "RL_calf_joint": -1.5,
-            "FR_calf_joint": -1.5,
-            "RR_calf_joint": -1.5,
+            "FL_calf_joint": -1.4,
+            "RL_calf_joint": -1.4,
+            "FR_calf_joint": -1.4,
+            "RR_calf_joint": -1.4,
         }
 
     class control(LeggedRobotCfg.control):
         control_type = "P"
         stiffness = {
-            # hip：略降低，减少 lateral splay（外摆）
-            "FL_hip": 35.0,
-            "FR_hip": 35.0,
-            "RL_hip": 35.0,
-            "RR_hip": 35.0,
-
-            # thigh：保持主要支撑能力
+           
+            "FL_hip": 40.0,
+            "FR_hip": 40.0,
+            "RL_hip": 40.0,
+            "RR_hip": 40.0,
+    
             "FL_thigh": 40.0,
             "FR_thigh": 40.0,
             "RL_thigh": 40.0,
             "RR_thigh": 40.0,
 
-            # calf：降低刚度，提高地形顺应性
-            "FL_calf": 35.0,
-            "FR_calf": 35.0,
-            "RL_calf": 35.0,
-            "RR_calf": 35.0,
+            "FL_calf": 80.0,
+            "FR_calf": 80.0,
+            "RL_calf": 80.0,
+            "RR_calf": 80.0,
         }
         damping = {
-            "FL_hip": 2.0, "FR_hip": 2.0, "RL_hip": 2.0, "RR_hip": 2.0,
-            "FL_thigh": 2.0, "FR_thigh": 2.0, "RL_thigh": 2.0, "RR_thigh": 2.0,
-            "FL_calf": 3.0, "FR_calf": 3.0, "RL_calf": 3.0, "RR_calf": 3.0,
+            "FL_hip": 1.0, "FR_hip": 1.0, "RL_hip": 1.0, "RR_hip": 1.0,
+            "FL_thigh": 1.0, "FR_thigh": 1.0, "RL_thigh": 1.0, "RR_thigh": 1.0,
+            "FL_calf": 2.0, "FR_calf": 2.0, "RL_calf": 2.0, "RR_calf": 2.0,
         }
         action_scale = 0.25  # 调整动作幅度，使小腿运动更平稳
         decimation = 4
@@ -72,8 +70,6 @@ class MybotV3RoughCfg(LeggedRobotCfg):
             ang_vel_yaw = [-1.0, 1.0]
             heading = [-1.0, 1.0]
 
-    class terrain(LeggedRobotCfg.terrain):
-        stair_height_levels = [0.02, 0.04, 0.06, 0.08, 0.09, 0.10, 0.105, 0.11, 0.12, 0.13]
 
     class asset(LeggedRobotCfg.asset):
         file = "{LEGGED_GYM_ROOT_DIR}/resources/robots/mybot_v3/urdf/mybot_v3.urdf"
@@ -93,7 +89,7 @@ class MybotV3RoughCfg(LeggedRobotCfg):
     class rewards(LeggedRobotCfg.rewards):
         class scales:
             termination = -0.0
-            tracking_lin_vel = 1.2
+            tracking_lin_vel = 2.0
             tracking_ang_vel = 0.5
             lin_vel_z = -2.0
             lin_vel_y = -0.1
@@ -102,10 +98,10 @@ class MybotV3RoughCfg(LeggedRobotCfg):
             dof_acc = -2.5e-7
             joint_power = -2e-5
             base_height = -1.0
-            foot_clearance = -0.01
+            foot_clearance = -0.02
             action_rate = -0.01
-            smoothness = -0.02
-            feet_air_time = 0.20
+            smoothness = -0.01
+            feet_air_time = 0.00
             collision = -0.0
             feet_stumble = -0.0
             stand_still = -0.0
@@ -114,9 +110,13 @@ class MybotV3RoughCfg(LeggedRobotCfg):
             dof_pos_limits = -0.0
             dof_vel_limits = -0.0
             torque_limits = -0.0
-            hip_pos = -0.1
-            rear_thigh_pos = 0.0 #关闭后腿大腿位置奖励
+            # hip_pos = -0.0
+            rear_thigh_pos = -0.2
+            dof_pos = -0.1
 
+        dof_pos_hip_weight = 4.0
+        dof_pos_thigh_weight = 1.0
+        dof_pos_calf_weight = 0.0
         only_positive_rewards = False
         tracking_sigma = 0.25
         soft_dof_pos_limit = 1.0
@@ -140,11 +140,11 @@ class MybotV3RoughCfgPPO(LeggedRobotCfgPPO):
 
     class algorithm(LeggedRobotCfgPPO.algorithm):
         entropy_coef = 0.01
-        learning_rate = 3e-4
-        num_mini_batches = 4
+        # learning_rate = 3e-4
+        # num_mini_batches = 4
         
-        # 关闭 adaptive PPO
-        schedule = 'fixed'
+        # # 关闭 adaptive PPO
+        # schedule = 'fixed'
     class runner(LeggedRobotCfgPPO.runner):
         run_name = ""
         experiment_name = "rough_mybot_v3"

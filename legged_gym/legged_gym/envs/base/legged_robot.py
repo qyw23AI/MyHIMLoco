@@ -686,10 +686,20 @@ class LeggedRobot(BaseTask):
 
         # joint positions offsets and PD gains
         self.default_dof_pos = torch.zeros(self.num_dof, dtype=torch.float, device=self.device, requires_grad=False)
+        self.dof_pos_weights = torch.zeros(self.num_dof, dtype=torch.float, device=self.device, requires_grad=False)
         for i in range(self.num_dofs):
             name = self.dof_names[i]
             angle = self.cfg.init_state.default_joint_angles[name]
             self.default_dof_pos[i] = angle
+
+            if "hip" in name.lower():
+                self.dof_pos_weights[i] = getattr(self.cfg.rewards, "dof_pos_hip_weight", 1.0)
+            elif "thigh" in name.lower():
+                self.dof_pos_weights[i] = getattr(self.cfg.rewards, "dof_pos_thigh_weight", 1.0)
+            elif "calf" in name.lower():
+                self.dof_pos_weights[i] = getattr(self.cfg.rewards, "dof_pos_calf_weight", 1.0)
+            else:
+                self.dof_pos_weights[i] = 1.0
             found = False
             for dof_name in self.cfg.control.stiffness.keys():
                 if dof_name in name:
@@ -1119,6 +1129,10 @@ class LeggedRobot(BaseTask):
         return feet_height
 
     #------------ reward functions----------------
+    def _reward_dof_pos(self):
+        # Penalize dof positions
+        return torch.sum(self.dof_pos_weights * torch.square(self.dof_pos - self.default_dof_pos), dim=1)
+
     def _reward_tracking_lin_vel(self):
         # Tracking of linear velocity commands (xy axes)
         lin_vel_error = torch.sum(torch.square(self.commands[:, :2] - self.base_lin_vel[:, :2]), dim=1)

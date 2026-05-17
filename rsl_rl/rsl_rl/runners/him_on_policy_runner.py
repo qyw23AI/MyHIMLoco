@@ -93,6 +93,34 @@ class HIMOnPolicyRunner:
         # initialize writer
         if self.log_dir is not None and self.writer is None:
             self.writer = SummaryWriter(log_dir=self.log_dir, flush_secs=10)
+
+            # Log config
+            import json
+            try:
+                def class_to_dict(obj) -> dict:
+                    if not hasattr(obj, "__dict__"):
+                        return obj
+                    result = {}
+                    for key in dir(obj):
+                        if key.startswith("_"):
+                            continue
+                        element = []
+                        val = getattr(obj, key)
+                        if isinstance(val, list):
+                            for item in val:
+                                element.append(class_to_dict(item))
+                        else:
+                            element = class_to_dict(val)
+                        result[key] = element
+                    return result
+
+                env_cfg_dict = class_to_dict(getattr(self.env, "cfg", getattr(getattr(self.env, "task", None), "cfg", {})))
+                train_cfg_dict = {"runner": self.cfg, "algorithm": self.alg_cfg, "policy": self.policy_cfg}
+
+                self.writer.add_text("Config/env_cfg", "```json\n" + json.dumps(env_cfg_dict, indent=4) + "\n```")
+                self.writer.add_text("Config/train_cfg", "```json\n" + json.dumps(train_cfg_dict, indent=4) + "\n```")
+            except Exception as e:
+                print("Failed to log config to tensorboard", e)
         if init_at_random_ep_len:
             self.env.episode_length_buf = torch.randint_like(self.env.episode_length_buf, high=int(self.env.max_episode_length))
         obs = self.env.get_observations()

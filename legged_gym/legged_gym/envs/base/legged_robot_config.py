@@ -176,8 +176,12 @@ class LeggedRobotCfg(BaseConfig):
             feet_stumble = -0.0 
             action_rate = -0.01
             stand_still = -0.
+            dof_pos = -0.0
 
         only_positive_rewards = True # if true negative total rewards are clipped at zero (avoids early termination problems)
+        dof_pos_hip_weight = 5.0
+        dof_pos_thigh_weight = 5.0
+        dof_pos_calf_weight = 5.0
         tracking_sigma = 0.25 # tracking reward = exp(-error^2/sigma)
         soft_dof_pos_limit = 1. # percentage of urdf limits, values above this limit are penalized
         soft_dof_vel_limit = 1.
