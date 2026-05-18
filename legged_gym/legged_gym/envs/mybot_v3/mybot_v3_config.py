@@ -11,7 +11,7 @@ class MybotV3RoughCfg(LeggedRobotCfg):
         num_envs = 4096
 
     class init_state(LeggedRobotCfg.init_state):
-        pos = [0.0, 0.0, 0.36]  # x,y,z [m]
+        pos = [0.0, 0.0, 0.38]  # x,y,z [m]
         default_joint_angles = {
             "FL_hip_joint": 0.1,
             "RL_hip_joint": 0.1,
@@ -23,10 +23,10 @@ class MybotV3RoughCfg(LeggedRobotCfg):
             "FR_thigh_joint": 0.8,
             "RR_thigh_joint": 1.0,
 
-            "FL_calf_joint": -1.4,
-            "RL_calf_joint": -1.4,
-            "FR_calf_joint": -1.4,
-            "RR_calf_joint": -1.4,
+            "FL_calf_joint": -1.5,
+            "RL_calf_joint": -1.5,
+            "FR_calf_joint": -1.5,
+            "RR_calf_joint": -1.5,
         }
 
     class control(LeggedRobotCfg.control):
@@ -43,15 +43,15 @@ class MybotV3RoughCfg(LeggedRobotCfg):
             "RL_thigh": 40.0,
             "RR_thigh": 40.0,
 
-            "FL_calf": 80.0,
-            "FR_calf": 80.0,
-            "RL_calf": 80.0,
-            "RR_calf": 80.0,
+            "FL_calf": 40.0,
+            "FR_calf": 40.0,
+            "RL_calf": 40.0,
+            "RR_calf": 40.0,
         }
         damping = {
             "FL_hip": 1.0, "FR_hip": 1.0, "RL_hip": 1.0, "RR_hip": 1.0,
             "FL_thigh": 1.0, "FR_thigh": 1.0, "RL_thigh": 1.0, "RR_thigh": 1.0,
-            "FL_calf": 2.0, "FR_calf": 2.0, "RL_calf": 2.0, "RR_calf": 2.0,
+            "FL_calf": 1.0, "FR_calf": 1.0, "RL_calf": 1.0, "RR_calf": 1.0,
         }
         action_scale = 0.25  # 调整动作幅度，使小腿运动更平稳
         decimation = 4
@@ -67,8 +67,8 @@ class MybotV3RoughCfg(LeggedRobotCfg):
         class ranges(LeggedRobotCfg.commands.ranges):
             lin_vel_x = [-0.2, 0.2]
             lin_vel_y = [-0.2, 0.2]
-            ang_vel_yaw = [-1.0, 1.0]
-            heading = [-1.0, 1.0]
+            ang_vel_yaw = [-3.14, 3.14]
+            heading = [-3.14, 3.14]
 
 
     class asset(LeggedRobotCfg.asset):
@@ -92,7 +92,7 @@ class MybotV3RoughCfg(LeggedRobotCfg):
             tracking_lin_vel = 2.0
             tracking_ang_vel = 0.5
             lin_vel_z = -2.0
-            lin_vel_y = -0.1
+            lin_vel_y = 0.0
             ang_vel_xy = -0.05
             orientation = -0.2
             dof_acc = -2.5e-7
@@ -115,23 +115,23 @@ class MybotV3RoughCfg(LeggedRobotCfg):
             dof_pos = -0.1
 
         dof_pos_hip_weight = 4.0
-        dof_pos_thigh_weight = 1.0
+        dof_pos_thigh_weight = 2.0
         dof_pos_calf_weight = 0.0
         only_positive_rewards = False
         tracking_sigma = 0.25
         soft_dof_pos_limit = 1.0
         soft_dof_vel_limit = 1.0
         soft_torque_limit = 1.0
-        base_height_target = 0.33
+        base_height_target = 0.31
         max_contact_force = 100.0
-        clearance_height_target = -0.22
+        clearance_height_target = -0.21
 
 
 class MybotV3RoughCfgPPO(LeggedRobotCfgPPO):
     class policy(LeggedRobotCfgPPO.policy):
 
         # 降低 exploration
-        init_noise_std = 0.5
+        init_noise_std = 1.0
 
         actor_hidden_dims = [512, 256, 128]
         critic_hidden_dims = [512, 256, 128]

@@ -89,10 +89,10 @@ def test_init_heights():
             "FR_thigh_joint": 0.8,
             "RR_thigh_joint": 1.0,
 
-            "FL_calf_joint": -1.4,
-            "RL_calf_joint": -1.4,
-            "FR_calf_joint": -1.4,
-            "RR_calf_joint": -1.4,
+            "FL_calf_joint": -1.5,
+            "RL_calf_joint": -1.5,
+            "FR_calf_joint": -1.5,
+            "RR_calf_joint": -1.5,
     }
     # =========================================================
     # Create environment
@@ -127,7 +127,7 @@ def test_init_heights():
     # Test range
     # =========================================================
 
-    z_values = np.arange(0.34, 0.44, 0.01)
+    z_values = np.arange(0.34, 0.50, 0.01)
 
     results = []
 
