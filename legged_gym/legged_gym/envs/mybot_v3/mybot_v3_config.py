@@ -65,8 +65,8 @@ class MybotV3RoughCfg(LeggedRobotCfg):
         heading_command = True
 
         class ranges(LeggedRobotCfg.commands.ranges):
-            lin_vel_x = [-0.2, 0.2]
-            lin_vel_y = [-0.2, 0.2]
+            lin_vel_x = [-1.0, 1.0]
+            lin_vel_y = [-1.0, 1.0]
             ang_vel_yaw = [-3.14, 3.14]
             heading = [-3.14, 3.14]
 
