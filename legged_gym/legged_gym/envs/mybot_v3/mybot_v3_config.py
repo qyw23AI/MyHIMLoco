@@ -11,7 +11,7 @@ class MybotV3RoughCfg(LeggedRobotCfg):
         num_envs = 4096
 
     class init_state(LeggedRobotCfg.init_state):
-        pos = [0.0, 0.0, 0.38]  # x,y,z [m]
+        pos = [0.0, 0.0, 0.40]  # x,y,z [m]
         default_joint_angles = {
             "FL_hip_joint": 0.1,
             "RL_hip_joint": 0.1,
@@ -122,9 +122,9 @@ class MybotV3RoughCfg(LeggedRobotCfg):
         soft_dof_pos_limit = 1.0
         soft_dof_vel_limit = 1.0
         soft_torque_limit = 1.0
-        base_height_target = 0.31
+        base_height_target = 0.33
         max_contact_force = 100.0
-        clearance_height_target = -0.21
+        clearance_height_target = -0.23
 
 
 class MybotV3RoughCfgPPO(LeggedRobotCfgPPO):
@@ -148,4 +148,4 @@ class MybotV3RoughCfgPPO(LeggedRobotCfgPPO):
     class runner(LeggedRobotCfgPPO.runner):
         run_name = ""
         experiment_name = "rough_mybot_v3"
-        num_steps_per_env = 200
+        num_steps_per_env = 100
