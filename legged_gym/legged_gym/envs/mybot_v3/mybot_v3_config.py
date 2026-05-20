@@ -124,7 +124,7 @@ class MybotV3RoughCfg(LeggedRobotCfg):
         soft_torque_limit = 1.0
         base_height_target = 0.33
         max_contact_force = 100.0
-        clearance_height_target = -0.23
+        clearance_height_target = -0.21
 
 
 class MybotV3RoughCfgPPO(LeggedRobotCfgPPO):
