@@ -315,17 +315,24 @@ class LeggedRobot(BaseTask):
         """
         self.up_axis_idx = 2 # 2 for z, 1 for y -> adapt gravity accordingly
         self.sim = self.gym.create_sim(self.sim_device_id, self.graphics_device_id, self.physics_engine, self.sim_params)
-        mesh_type = self.cfg.terrain.mesh_type
-        if mesh_type in ['heightfield', 'trimesh']:
-            self.terrain = Terrain(self.cfg.terrain, self.num_envs)
-        if mesh_type=='plane':
-            self._create_ground_plane()
-        elif mesh_type=='heightfield':
-            self._create_heightfield()
-        elif mesh_type=='trimesh':
-            self._create_trimesh()
-        elif mesh_type is not None:
-            raise ValueError("Terrain mesh type not recognised. Allowed types are [None, plane, heightfield, trimesh]")
+
+        if getattr(self.cfg.terrain, "selected", None):
+            # BarrierTrack or other selected terrain — uses terrain registry
+            from legged_gym.utils.terrain import get_terrain_cls
+            self.terrain = get_terrain_cls(self.cfg.terrain.selected)(self.cfg.terrain, self.num_envs)
+            self.terrain.add_terrain_to_sim(self.gym, self.sim, self.device)
+        else:
+            mesh_type = self.cfg.terrain.mesh_type
+            if mesh_type in ['heightfield', 'trimesh']:
+                self.terrain = Terrain(self.cfg.terrain, self.num_envs)
+            if mesh_type=='plane':
+                self._create_ground_plane()
+            elif mesh_type=='heightfield':
+                self._create_heightfield()
+            elif mesh_type=='trimesh':
+                self._create_trimesh()
+            elif mesh_type is not None:
+                raise ValueError("Terrain mesh type not recognised. Allowed types are [None, plane, heightfield, trimesh]")
         self._create_envs()
 
     def set_camera(self, position, lookat):
@@ -915,7 +922,18 @@ class LeggedRobot(BaseTask):
         """ Sets environment origins. On rough terrain the origins are defined by the terrain platforms.
             Otherwise create a grid.
         """
-        if self.cfg.terrain.mesh_type in ["heightfield", "trimesh"]:
+        if getattr(self.cfg.terrain, "selected", None):
+            self.custom_origins = True
+            self.env_origins = torch.zeros(self.num_envs, 3, device=self.device, requires_grad=False)
+            # put robots at the origins defined by the terrain (BarrierTrack etc.)
+            max_init_level = min(self.cfg.terrain.max_init_terrain_level, self.terrain.cfg.num_rows - 1)
+            if not self.cfg.terrain.curriculum: max_init_level = self.cfg.terrain.num_rows - 1
+            self.terrain_levels = torch.randint(0, max_init_level+1, (self.num_envs,), device=self.device)
+            self.terrain_types = torch.div(torch.arange(self.num_envs, device=self.device), (self.num_envs/self.cfg.terrain.num_cols), rounding_mode='floor').to(torch.long)
+            self.max_terrain_level = self.cfg.terrain.num_rows
+            self.terrain_origins = torch.from_numpy(self.terrain.env_origins).to(self.device).to(torch.float)
+            self.env_origins[:] = self.terrain_origins[self.terrain_levels, self.terrain_types]
+        elif self.cfg.terrain.mesh_type in ["heightfield", "trimesh"]:
             self.custom_origins = True
             self.env_origins = torch.zeros(self.num_envs, 3, device=self.device, requires_grad=False)
             # put robots at the origins defined by the terrain
@@ -1019,28 +1037,15 @@ class LeggedRobot(BaseTask):
         if self.cfg.terrain.mesh_type == 'plane':
             return torch.zeros(self.num_envs, self.num_height_points, device=self.device, requires_grad=False)
         elif self.cfg.terrain.mesh_type == 'none':
-            raise NameError("Can't measure height with terrain mesh type 'none'")
+            if not getattr(self.cfg.terrain, "selected", None):
+                raise NameError("Can't measure height with terrain mesh type 'none'")
 
         if env_ids:
             points = quat_apply_yaw(self.base_quat[env_ids].repeat(1, self.num_height_points), self.height_points[env_ids]) + (self.root_states[env_ids, :3]).unsqueeze(1)
         else:
             points = quat_apply_yaw(self.base_quat.repeat(1, self.num_height_points), self.height_points) + (self.root_states[:, :3]).unsqueeze(1)
 
-
-        points += self.terrain.cfg.border_size
-        points = (points/self.terrain.cfg.horizontal_scale).long()
-        px = points[:, :, 0].view(-1)
-        py = points[:, :, 1].view(-1)
-        px = torch.clip(px, 0, self.height_samples.shape[0]-2)
-        py = torch.clip(py, 0, self.height_samples.shape[1]-2)
-
-        heights1 = self.height_samples[px, py]
-        heights2 = self.height_samples[px+1, py]
-        heights3 = self.height_samples[px, py+1]
-        heights = torch.min(heights1, heights2)
-        heights = torch.min(heights, heights3)
-
-        return heights.view(self.num_envs, -1) * self.terrain.cfg.vertical_scale
+        return self.terrain.get_terrain_heights(points)
     
     def _get_base_heights(self, env_ids=None):
         """ Samples heights of the terrain at required points around each robot.
@@ -1058,30 +1063,16 @@ class LeggedRobot(BaseTask):
         if self.cfg.terrain.mesh_type == 'plane':
             return self.root_states[:, 2].clone()
         elif self.cfg.terrain.mesh_type == 'none':
-            raise NameError("Can't measure height with terrain mesh type 'none'")
+            if not getattr(self.cfg.terrain, "selected", None):
+                raise NameError("Can't measure height with terrain mesh type 'none'")
 
         if env_ids:
             points = quat_apply_yaw(self.base_quat[env_ids].repeat(1, self.num_base_height_points), self.base_height_points[env_ids]) + (self.root_states[env_ids, :3]).unsqueeze(1)
         else:
             points = quat_apply_yaw(self.base_quat.repeat(1, self.num_base_height_points), self.base_height_points) + (self.root_states[:, :3]).unsqueeze(1)
 
-
-        points += self.terrain.cfg.border_size
-        points = (points/self.terrain.cfg.horizontal_scale).long()
-        px = points[:, :, 0].view(-1)
-        py = points[:, :, 1].view(-1)
-        px = torch.clip(px, 0, self.height_samples.shape[0]-2)
-        py = torch.clip(py, 0, self.height_samples.shape[1]-2)
-
-        heights1 = self.height_samples[px, py]
-        heights2 = self.height_samples[px+1, py]
-        heights3 = self.height_samples[px, py+1]
-        heights = torch.min(heights1, heights2)
-        heights = torch.min(heights, heights3)
-        # heights = (heights1 + heights2 + heights3) / 3
-
-        base_height =  heights.view(self.num_envs, -1) * self.terrain.cfg.vertical_scale
-        base_height = torch.mean(self.root_states[:, 2].unsqueeze(1) - base_height, dim=1)
+        terrain_heights = self.terrain.get_terrain_heights(points)
+        base_height = torch.mean(self.root_states[:, 2].unsqueeze(1) - terrain_heights, dim=1)
 
         return base_height
     
@@ -1101,30 +1092,17 @@ class LeggedRobot(BaseTask):
         if self.cfg.terrain.mesh_type == 'plane':
             return self.feet_pos[:, :, 2].clone()
         elif self.cfg.terrain.mesh_type == 'none':
-            raise NameError("Can't measure height with terrain mesh type 'none'")
+            if not getattr(self.cfg.terrain, "selected", None):
+                raise NameError("Can't measure height with terrain mesh type 'none'")
 
         if env_ids:
             points = self.feet_pos[env_ids].clone()
         else:
             points = self.feet_pos.clone()
 
-        points += self.terrain.cfg.border_size
-        points = (points/self.terrain.cfg.horizontal_scale).long()
-        px = points[:, :, 0].view(-1)
-        py = points[:, :, 1].view(-1)
-        px = torch.clip(px, 0, self.height_samples.shape[0]-2)
-        py = torch.clip(py, 0, self.height_samples.shape[1]-2)
+        terrain_heights = self.terrain.get_terrain_heights(points)
 
-        heights1 = self.height_samples[px, py]
-        heights2 = self.height_samples[px+1, py]
-        heights3 = self.height_samples[px, py+1]
-        # heights = torch.min(heights1, heights2)
-        # heights = torch.min(heights, heights3)
-        heights = (heights1 + heights2 + heights3) / 3
-
-        heights = heights.view(self.num_envs, -1) * self.terrain.cfg.vertical_scale
-
-        feet_height =  self.feet_pos[:, :, 2] - heights
+        feet_height = self.feet_pos[:, :, 2] - terrain_heights
 
         return feet_height
 

@@ -38,6 +38,9 @@ from legged_gym.envs.mybot.mybot_config import MybotRoughCfg, MybotRoughCfgPPO
 from legged_gym.envs.mybot_v2.mybot_v2_config import MybotV2RoughCfg, MybotV2RoughCfgPPO
 from legged_gym.envs.mybot_v2_1.mybot_v2_1_config import MybotV21RoughCfg, MybotV21RoughCfgPPO
 from legged_gym.envs.mybot_v3.mybot_v3_config import MybotV3RoughCfg, MybotV3RoughCfgPPO
+from .base.legged_robot_field import LeggedRobotField
+from .mybot_v3.mybot_v3_bridge_a_config import MybotV3BridgeACfg, MybotV3BridgeACfgPPO
+from .mybot_v3.mybot_v3_bridge_b_config import MybotV3BridgeBCfg, MybotV3BridgeBCfgPPO
 
 
 import os
@@ -51,3 +54,7 @@ task_registry.register( "mybot",LeggedRobot, MybotRoughCfg(), MybotRoughCfgPPO()
 task_registry.register( "mybot_v2",LeggedRobot, MybotV2RoughCfg(), MybotV2RoughCfgPPO())
 task_registry.register( "mybot_v2_1",LeggedRobot, MybotV21RoughCfg(), MybotV21RoughCfgPPO())
 task_registry.register( "mybot_v3",LeggedRobot, MybotV3RoughCfg(), MybotV3RoughCfgPPO())
+task_registry.register( "mybot_v3_bridge_a", LeggedRobotField, MybotV3BridgeACfg(), MybotV3BridgeACfgPPO())
+task_registry.register( "mybot_v3_bridge_b", LeggedRobotField, MybotV3BridgeBCfg(), MybotV3BridgeBCfgPPO())
+from .mybot_v3_with_arm.mybot_v3_with_arm_config import MybotV3WithArmRoughCfg, MybotV3WithArmRoughCfgPPO
+task_registry.register( "mybot_v3_with_arm", LeggedRobot, MybotV3WithArmRoughCfg(), MybotV3WithArmRoughCfgPPO())

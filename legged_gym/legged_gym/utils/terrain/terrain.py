@@ -29,6 +29,7 @@
 # Copyright (c) 2021 ETH Zurich, Nikita Rudin
 
 import numpy as np
+import torch
 from numpy.random import choice
 from scipy import interpolate
 
@@ -88,7 +89,7 @@ class Terrain:
                 difficulty = i / self.cfg.num_rows
                 choice = j / self.cfg.num_cols + 0.001
 
-                terrain = self.make_terrain(choice, difficulty, curriculum_level=i + 1)
+                terrain = self.make_terrain(choice, difficulty)
                 self.add_terrain_to_map(terrain, i, j)
 
     def selected_terrain(self):
@@ -106,17 +107,15 @@ class Terrain:
             eval(terrain_type)(terrain, **self.cfg.terrain_kwargs.terrain_kwargs)
             self.add_terrain_to_map(terrain, i, j)
     
-    def make_terrain(self, choice, difficulty, curriculum_level=None):
+    def make_terrain(self, choice, difficulty):
         terrain = terrain_utils.SubTerrain(   "terrain",
                                 width=self.width_per_env_pixels,
                                 length=self.width_per_env_pixels,
                                 vertical_scale=self.cfg.vertical_scale,
                                 horizontal_scale=self.cfg.horizontal_scale)
         slope = difficulty * 0.4
-        amplitude = 0.01 + 0.07 * difficulty
         step_height = 0.05 + 0.18 * difficulty
- 
-        discrete_obstacles_height = 0.05 + difficulty * 0.1
+        discrete_obstacles_height = 0.05 + difficulty * 0.2
         stepping_stones_size = 1.5 * (1.05 - difficulty)
         stone_distance = 0.05 if difficulty==0 else 0.1
         gap_size = 1. * difficulty
@@ -127,11 +126,11 @@ class Terrain:
             terrain_utils.pyramid_sloped_terrain(terrain, slope=slope, platform_size=3.)
         elif choice < self.proportions[1]:
             terrain_utils.pyramid_sloped_terrain(terrain, slope=slope, platform_size=3.)
-            terrain_utils.random_uniform_terrain(terrain, min_height=-amplitude, max_height=amplitude, step=0.005, downsampled_scale=0.2)
+            terrain_utils.random_uniform_terrain(terrain, min_height=-0.05, max_height=0.05, step=0.005, downsampled_scale=0.2)
         elif choice < self.proportions[3]:
             if choice<self.proportions[2]:
                 step_height *= -1
-            terrain_utils.pyramid_stairs_terrain(terrain, step_width=0.30, step_height=step_height, platform_size=3.)
+            terrain_utils.pyramid_stairs_terrain(terrain, step_width=0.31, step_height=step_height, platform_size=3.)
         elif choice < self.proportions[4]:
             num_rectangles = 20
             rectangle_min_size = 1.
@@ -164,6 +163,65 @@ class Terrain:
         y2 = int((self.env_width/2. + 1) / terrain.horizontal_scale)
         env_origin_z = np.max(terrain.height_field_raw[x1:x2, y1:y2])*terrain.vertical_scale
         self.env_origins[i, j] = [env_origin_x, env_origin_y, env_origin_z]
+    
+    def _create_heightfield(self, gym, sim, device= "cpu"):
+        """ Adds a heightfield terrain to the simulation, sets parameters based on the cfg.
+        """
+        hf_params = gym.HeightFieldParams()
+        hf_params.column_scale = self.cfg.horizontal_scale
+        hf_params.row_scale = self.cfg.horizontal_scale
+        hf_params.vertical_scale = self.cfg.vertical_scale
+        hf_params.nbRows = self.tot_cols
+        hf_params.nbColumns = self.tot_rows 
+        hf_params.transform.p.x = -self.cfg.border_size 
+        hf_params.transform.p.y = -self.cfg.border_size
+        hf_params.transform.p.z = 0.0
+        hf_params.static_friction = self.cfg.static_friction
+        hf_params.dynamic_friction = self.cfg.dynamic_friction
+        hf_params.restitution = self.cfg.restitution
+
+        self.gym.add_heightfield(sim, self.heightsamples, hf_params)
+    
+    def _create_trimesh(self, gym, sim, device= "cpu"):
+        """ Adds a triangle mesh terrain to the simulation, sets parameters based on the cfg.
+        # """
+        tm_params = gym.TriangleMeshParams()
+        tm_params.nb_vertices = self.vertices.shape[0]
+        tm_params.nb_triangles = self.triangles.shape[0]
+
+        tm_params.transform.p.x = -self.cfg.border_size 
+        tm_params.transform.p.y = -self.cfg.border_size
+        tm_params.transform.p.z = 0.0
+        tm_params.static_friction = self.cfg.static_friction
+        tm_params.dynamic_friction = self.cfg.dynamic_friction
+        tm_params.restitution = self.cfg.restitution
+        self.gym.add_triangle_mesh(self.sim, self.vertices.flatten(order='C'), self.triangles.flatten(order='C'), tm_params)
+
+    def add_terrain_to_sim(self, gym, sim, device= "cpu"):
+        if self.type == "heightfield":
+            self._create_heightfield(gym, sim, device)
+        elif self.type == "trimesh":
+            self._create_trimesh(gym, sim, device)
+        else:
+            raise NotImplementedError("Terrain type {} not implemented".format(self.type))
+
+    def get_terrain_heights(self, points):
+        """ Return the z coordinate of the terrain where just below the given points. """
+        num_robots = points.shape[0]
+        points += self.cfg.border_size
+        points = (points/self.cfg.horizontal_scale).long()
+        px = points[:, :, 0].view(-1)
+        py = points[:, :, 1].view(-1)
+        px = torch.clip(px, 0, self.heightsamples.shape[0]-2)
+        py = torch.clip(py, 0, self.heightsamples.shape[1]-2)
+
+        heights1 = self.heightsamples[px, py]
+        heights2 = self.heightsamples[px+1, py]
+        heights3 = self.heightsamples[px, py+1]
+        heights = torch.min(heights1, heights2)
+        heights = torch.min(heights, heights3)
+
+        return heights.view(num_robots, -1) * self.cfg.vertical_scale
 
 def gap_terrain(terrain, gap_size, platform_size=1.):
     gap_size = int(gap_size / terrain.horizontal_scale)
