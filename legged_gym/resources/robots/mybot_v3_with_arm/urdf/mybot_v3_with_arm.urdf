@@ -463,9 +463,9 @@
   </joint>
   <link name="RR_calf">
     <inertial>
-      <origin xyz="0.00105039 -9.676E-05 -0.06329053" rpy="0 0 0"/>
-      <mass value="0.23708"/>
-      <inertia ixx="0.0020709" ixy="-3E-08" ixz="0.00026042" iyy="0.00210651" iyz="1.58E-06" izz="0.00013106"/>
+      <origin xyz="0.00126062 -0.00001358 -0.06701153" rpy="0 0 0"/>
+      <mass value="0.23880158"/>
+      <inertia ixx="0.00202452" ixy="0" ixz="0.00025658" iyy="0.00207123" iyz="0.00000027" izz="0.00011991"/>
     </inertial>
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
