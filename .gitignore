@@ -60,3 +60,4 @@ runs
 __pycache__
 isaacgym/
 
+legged_gym_ wait_learning/
