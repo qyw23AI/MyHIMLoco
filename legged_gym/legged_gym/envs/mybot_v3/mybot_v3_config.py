@@ -65,11 +65,27 @@ class MybotV3RoughCfg(LeggedRobotCfg):
         heading_command = True
 
         class ranges(LeggedRobotCfg.commands.ranges):
-            lin_vel_x = [-1.0, 1.0]
-            lin_vel_y = [-1.0, 1.0]
+            lin_vel_x = [-0.2, 0.2]
+            lin_vel_y = [-0.2, 0.2]
             ang_vel_yaw = [-3.14, 3.14]
             heading = [-3.14, 3.14]
 
+    # 楼梯专用地形配置 - 关闭平地和斜坡
+    class terrain(LeggedRobotCfg.terrain):
+        mesh_type = 'trimesh'
+        curriculum = True
+        static_friction = 1.0
+        dynamic_friction = 1.0
+        restitution = 0.
+        # 全部设置为楼梯，关闭平地和斜坡
+        # terrain types: [smooth slope, rough slope, stairs up, stairs down, discrete]
+        terrain_proportions = [0.0, 0.0, 0.6, 0.4, 0.0]  # 60%上楼楼梯 + 40%下楼楼梯
+        # 只上楼: [0.0, 0.0, 1.0, 0.0, 0.0]
+        max_init_terrain_level = 2
+        terrain_length = 8.
+        terrain_width = 8.
+        num_rows = 10
+        num_cols = 20
 
     class asset(LeggedRobotCfg.asset):
         file = "{LEGGED_GYM_ROOT_DIR}/resources/robots/mybot_v3/urdf/mybot_v3.urdf"
@@ -83,7 +99,7 @@ class MybotV3RoughCfg(LeggedRobotCfg):
         armature = {
             "FL_hip": 0.01, "FR_hip": 0.01, "RL_hip": 0.01, "RR_hip": 0.01,
             "FL_thigh": 0.01, "FR_thigh": 0.01, "RL_thigh": 0.01, "RR_thigh": 0.01,
-            "FL_calf": 0.0544, "FR_calf": 0.0544, "RL_calf": 0.0544, "RR_calf": 0.0544,
+            "FL_calf": 0.01, "FR_calf": 0.01, "RL_calf": 0.01, "RR_calf": 0.01,
         }
 
     class rewards(LeggedRobotCfg.rewards):

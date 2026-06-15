@@ -26,11 +26,11 @@ set -euo pipefail
 #   MUJOCO_DIR                 MuJoCo 安装目录（默认 ~/.mujoco）
 #   ISAACGYMENVS_GIT_URL       IsaacGymEnvs 仓库地址
 #   ISAACGYM_ARCHIVE           Isaac Gym 压缩包路径（默认自动搜索）
-#   PROJECT_DIR                项目根目录（默认脚本所在目录的上一级）
+#   PROJECT_DIR                项目根目录（默认脚本所在目录）
 # ============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_DIR="${PROJECT_DIR:-$(cd "${SCRIPT_DIR}/.." && pwd)}"
+PROJECT_DIR="${PROJECT_DIR:-${SCRIPT_DIR}}"
 CONDA_DIR="${CONDA_DIR:-/opt/conda}"
 CONDA_ENV="${CONDA_ENV:-himloco}"
 PYTHON_VERSION="${PYTHON_VERSION:-3.8.10}"
@@ -102,8 +102,8 @@ install_vnc() {
     
     local VGL_DIR="/opt/VirtualGL"
     local TURBO_DIR="/opt/TurboVNC"
-    local VGL_VER="2.13.1"
-    local TURBO_VER="3.1.3"
+    local VGL_VER="3.1.4"
+    local TURBO_VER="3.3"
     
     mkdir -p /tmp/vnc_inst && cd /tmp/vnc_inst
     
@@ -123,22 +123,23 @@ install_vnc() {
     
     if [[ ! -d "${TURBO_DIR}" ]]; then
         log_info "下载 TurboVNC ${TURBO_VER}..."
-        local TURBO_TAR="turbovnc_${TURBO_VER}_amd64.tar.gz"
-        if download_with_fallback "${TURBO_TAR}" \
-            "https://github.com/TurboVNC/turbovnc/releases/download/${TURBO_VER}/${TURBO_TAR}" \
-            "https://ghproxy.com/https://github.com/TurboVNC/turbovnc/releases/download/${TURBO_VER}/${TURBO_TAR}"; then
-            sudo tar -zxvf "${TURBO_TAR}" -C /opt
-            sudo mv /opt/turbovnc_${TURBO_VER}_amd64 "${TURBO_DIR}"
-            rm -f "${TURBO_TAR}"
+        local TURBO_DEB="turbovnc_${TURBO_VER}_amd64.deb"
+        if download_with_fallback "${TURBO_DEB}" \
+            "https://github.com/TurboVNC/turbovnc/releases/download/${TURBO_VER}/${TURBO_DEB}" \
+            "https://ghproxy.com/https://github.com/TurboVNC/turbovnc/releases/download/${TURBO_VER}/${TURBO_DEB}"; then
+            sudo dpkg -i "${TURBO_DEB}" || sudo apt-get install -f -y
+            rm -f "${TURBO_DEB}"
             log_info "TurboVNC 安装完成"
         fi
     else
         log_info "TurboVNC 已安装"
     fi
     
+    # 安装 X11 依赖和轻量桌面环境 xfce4（VNC 需要桌面环境才能启动）
     sudo apt-get install -y --no-install-recommends \
         xorg x11vnc xvfb xauth libxtst6 libxcursor1 libxinerama1
-    
+    sudo apt-get install -y --no-install-recommends xfce4 xfce4-goodies
+
     [[ -d "${TURBO_DIR}" ]] && {
         sudo ln -sf "${TURBO_DIR}/bin/vncserver" /usr/local/bin/vncserver
         sudo ln -sf "${TURBO_DIR}/bin/vncstop" /usr/local/bin/vncstop
@@ -244,15 +245,27 @@ if [[ "${SKIP_SYSTEM_DEPS}" != "1" ]] && [[ "${HAS_SUDO}" == "1" ]]; then
     # 安装 libpython3.8（Ubuntu 22.04 需要从 Ubuntu 20.04 源补充）
     log_step "----- 补充 libpython3.8（Isaac Gym gym_38.so 依赖）-----"
     if ! ldconfig -p | grep -q libpython3.8; then
-        mkdir -p /tmp/py38_dep
-        cd /tmp/py38_dep
-        download_with_fallback libpython3.8.deb \
-            "http://mirrors.aliyun.com/ubuntu/pool/main/p/python3.8/libpython3.8_3.8.10-0ubuntu1~20.04.9_amd64.deb" \
-            "http://archive.ubuntu.com/ubuntu/pool/main/p/python3.8/libpython3.8_3.8.10-0ubuntu1~20.04.9_amd64.deb"
-        sudo dpkg -i libpython3.8.deb || true
-        sudo apt-get install -f -y || true
-        rm -rf /tmp/py38_dep
-        cd "${PROJECT_DIR}"
+        # 首先尝试通过 apt 安装
+        log_info "尝试通过 apt 安装 libpython3.8..."
+        if sudo apt-get install -y libpython3.8 2>/dev/null; then
+            log_info "libpython3.8 通过 apt 安装成功"
+        else
+            # 如果 apt 失败，尝试下载 .deb 包
+            log_warn "apt 安装失败，尝试手动下载 libpython3.8..."
+            mkdir -p /tmp/py38_dep
+            cd /tmp/py38_dep
+            if download_with_fallback libpython3.8.deb \
+                "http://mirrors.aliyun.com/ubuntu/pool/main/p/python3.8/libpython3.8_3.8.10-0ubuntu1~20.04.9_amd64.deb" \
+                "http://archive.ubuntu.com/ubuntu/pool/main/p/python3.8/libpython3.8_3.8.10-0ubuntu1~20.04.9_amd64.deb" \
+                "http://security.ubuntu.com/ubuntu/pool/main/p/python3.8/libpython3.8_3.8.10-0ubuntu1~20.04.9_amd64.deb"; then
+                sudo dpkg -i libpython3.8.deb || true
+                sudo apt-get install -f -y || true
+            else
+                log_warn "libpython3.8 下载失败，但将继续执行（可能影响 Isaac Gym 运行）"
+            fi
+            rm -rf /tmp/py38_dep
+            cd "${PROJECT_DIR}"
+        fi
         log_info "libpython3.8 安装完成"
     else
         log_info "libpython3.8 已存在，跳过"
@@ -304,16 +317,15 @@ if [[ "${SKIP_CONDA}" != "1" ]]; then
     if [[ "${USE_CN_MIRROR}" == "1" ]]; then
         log_info "配置 conda 国内镜像源（清华）"
         "${CONDA_DIR}/bin/conda" config --set show_channel_urls yes
-        "${CONDA_DIR}/bin/conda" config --set default_channels \
-            https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main \
-            https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/r \
-            https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/msys2
+        "${CONDA_DIR}/bin/conda" config --remove-key default_channels 2>/dev/null || true
+        "${CONDA_DIR}/bin/conda" config --append channels "https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main"
+        "${CONDA_DIR}/bin/conda" config --append channels "https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/r"
+        "${CONDA_DIR}/bin/conda" config --append channels "https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/msys2"
         "${CONDA_DIR}/bin/conda" config --set custom_channels.conda-forge \
-            https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud
-        "${CONDA_DIR}/bin/conda" config --set custom_channels.pytorch \
-            https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud
-        "${CONDA_DIR}/bin/conda" config --set custom_channels.nvidia \
-            https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud
+            "https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud"
+        # nvidia channel 使用官方源（清华镜像的 nvidia channel 经常不可用）
+        # "${CONDA_DIR}/bin/conda" config --set custom_channels.nvidia \
+        #     "https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud"
     fi
 
     # 同意 conda tos
@@ -332,21 +344,14 @@ if [[ "${SKIP_CONDA}" != "1" ]]; then
         log_info "conda 环境创建完成"
     fi
 
-    # 安装 PyTorch（通过 conda 安装以避免 pip 解析 CUDA wheel 时受网络波动影响）
+    # 安装 PyTorch（通过 pip 安装 CUDA 版本以确保正确的 CUDA 支持）
     log_info "安装 PyTorch ${TORCH_VERSION}+cu${CUDA_VERSION}"
-    if [[ "${USE_CN_MIRROR}" == "1" ]]; then
-        "${CONDA_DIR}/bin/conda" install -y -n "${CONDA_ENV}" \
-            -c pytorch -c nvidia \
-            "pytorch==${TORCH_VERSION}" \
-            "torchvision==${TORCHVISION_VERSION}" \
-            "pytorch-cuda=${CUDA_VERSION}"
-    else
-        "${CONDA_DIR}/bin/conda" install -y -n "${CONDA_ENV}" \
-            -c pytorch -c nvidia \
-            "pytorch==${TORCH_VERSION}" \
-            "torchvision==${TORCHVISION_VERSION}" \
-            "pytorch-cuda=${CUDA_VERSION}"
-    fi
+    "${CONDA_DIR}/envs/${CONDA_ENV}/bin/pip" install \
+        --retries 20 --default-timeout 120 \
+        "torch==${TORCH_VERSION}" \
+        "torchvision==${TORCHVISION_VERSION}" \
+        "torchaudio==${TORCH_VERSION}" \
+        --index-url "https://download.pytorch.org/whl/cu${CUDA_VERSION/./}"
     "${CONDA_DIR}/bin/conda" clean -afy
     
     log_info "PyTorch 安装完成"
@@ -587,6 +592,8 @@ CONDA_LIB="${CONDA_DIR}/envs/${CONDA_ENV}/lib"
 SYSTEM_LIB="/usr/lib/x86_64-linux-gnu"
 MUJOCO_BIN="${MUJOCO_DIR}/mujoco210/bin"
 
+mkdir -p "${PROJECT_DIR}/sh"
+
 # 写入环境变量配置脚本
 ENV_SCRIPT="${PROJECT_DIR}/sh/env.sh"
 cat > "${ENV_SCRIPT}" << ENVEOF
@@ -609,7 +616,7 @@ export DISPLAY="\${DISPLAY:-:1}"
 # VirtualGL 和 TurboVNC 路径
 export VGL_HOME="/opt/VirtualGL"
 export TURBOVNC_HOME="/opt/TurboVNC"
-export PATH="${TURBOVNC_HOME}/bin:${VGL_HOME}/bin:${PATH}"
+export PATH="\${TURBOVNC_HOME}/bin:\${VGL_HOME}/bin:\${PATH}"
 export VGL_GLFLUSH=1
 export VGL_VSYNC=1
 
@@ -667,25 +674,29 @@ export VGL_GLFLUSH=1
 export VGL_VSYNC=1
 export MUJOCO_GL=egl
 
+TURBOVNC_BIN="/opt/TurboVNC/bin"
+VNC_PASSWD_FILE="${HOME}/.vnc/passwd"
+
 # 检查 VNC 密码是否已设置
-if [[ ! -f "${HOME}/.vnc/passwd" ]]; then
+if [[ ! -f "${VNC_PASSWD_FILE}" ]]; then
     echo "首次使用 VNC，请设置密码（至少6位）:"
-    vncpasswd
+    ${TURBOVNC_BIN}/vncpasswd
 fi
 
-if ! pgrep -f "Xvfb :1" > /dev/null; then
-    echo "启动 Xvfb :1..."
-    Xvfb :1 -screen 0 1920x1080x24 -ac +extension GLX +render -noreset &
-    sleep 2
+# 停止已有的 VNC 服务
+if ${TURBOVNC_BIN}/vncserver -list 2>/dev/null | grep -q ":1"; then
+    echo "停止已有的 VNC :1..."
+    ${TURBOVNC_BIN}/vncserver -kill :1 2>/dev/null || true
+    sleep 1
 fi
 
 echo "启动 TurboVNC server..."
-vncserver :1 -geometry 1920x1080 -depth 24 -vsys 0
+${TURBOVNC_BIN}/vncserver :1 -geometry 1920x1080 -depth 24 -wm xfce
 
 echo ""
 echo "VNC 服务已启动"
 echo "连接地址: <your_server_ip>:5901"
-echo "如需停止 VNC: vncserver -kill :1"
+echo "如需停止 VNC: ${TURBOVNC_BIN}/vncserver -kill :1"
 VNCEOF
 
 chmod +x "${VNC_START_SCRIPT}"
@@ -762,7 +773,7 @@ echo "--- rsl_rl ---"
 
 # 验证 VNC
 echo "--- VNC ---"
-if command -v vncserver >/dev/null 2>&1; then
+if command -v vncserver >/dev/null 2>&1 || [[ -x /opt/TurboVNC/bin/vncserver ]]; then
     echo "TurboVNC 已安装"
 else
     log_warn "TurboVNC 未安装"
@@ -787,6 +798,7 @@ echo "     bash ${PROJECT_DIR}/sh/start_vnc.sh"
 echo ""
 echo "  4. 连接到 VNC 服务器:"
 echo "     使用 VNC Viewer 连接到 <your_server_ip>:5901"
+echo "     注意：需在云服务器安全组中开放 TCP 5901 端口"
 echo ""
 echo "  5. 在 VNC 中打开终端，运行训练测试:"
 echo "     source ${PROJECT_DIR}/sh/env.sh"
