@@ -214,7 +214,10 @@ class Terrain:
         py = points[:, :, 1].view(-1)
         px = torch.clip(px, 0, self.heightsamples.shape[0]-2)
         py = torch.clip(py, 0, self.heightsamples.shape[1]-2)
-
+        
+        if isinstance(self.heightsamples, np.ndarray):
+            self.heightsamples = torch.from_numpy(self.heightsamples).to(points.device)
+        
         heights1 = self.heightsamples[px, py]
         heights2 = self.heightsamples[px+1, py]
         heights3 = self.heightsamples[px, py+1]
