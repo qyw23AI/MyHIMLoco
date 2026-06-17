@@ -8,7 +8,7 @@ from legged_gym.envs.base.legged_robot_config import LeggedRobotCfg, LeggedRobot
 
 class MybotV3WithArmRoughCfg(LeggedRobotCfg):
     class env:
-        num_envs = 8192
+        num_envs = 4096
         num_one_step_observations = 45
         num_observations = num_one_step_observations * 6
         num_one_step_privileged_obs = 45 + 3 + 3 + 187 # additional: base_lin_vel, external_forces, scan_dots
@@ -42,7 +42,7 @@ class MybotV3WithArmRoughCfg(LeggedRobotCfg):
         num_rows= 10 # number of terrain rows (levels)
         num_cols = 20 # number of terrain cols (types)
         # terrain types: [smooth slope, rough slope, stairs up, stairs down, discrete]
-        terrain_proportions = [0.8, 0.1, 0.0, 0.0, 0.1]
+        terrain_proportions = [0.5, 0.2, 0.1, 0.1, 0.1]
         # trimesh only:
         slope_treshold = 0.75 # slopes above this threshold will be corrected to vertical surfaces
 
@@ -55,9 +55,9 @@ class MybotV3WithArmRoughCfg(LeggedRobotCfg):
             "RR_hip_joint": -0.1,
 
             "FL_thigh_joint": 0.8,
-            "RL_thigh_joint": 1.0,
+            "RL_thigh_joint": 0.9,
             "FR_thigh_joint": 0.8,
-            "RR_thigh_joint": 1.0,
+            "RR_thigh_joint": 0.9,
 
             "FL_calf_joint": -1.5,
             "RL_calf_joint": -1.5,
@@ -138,7 +138,7 @@ class MybotV3WithArmRoughCfg(LeggedRobotCfg):
         initial_joint_pos_range = [0.5, 1.5]
         
         disturbance = True
-        disturbance_range = [-35.0, 35.0]
+        disturbance_range = [-30.0, 30.0]
         disturbance_interval = 6
         
         push_robots = True
@@ -150,17 +150,17 @@ class MybotV3WithArmRoughCfg(LeggedRobotCfg):
     class rewards(LeggedRobotCfg.rewards):
         class scales:
             termination = -0.0
-            tracking_lin_vel = 1.8
+            tracking_lin_vel = 2.0
             tracking_ang_vel = 0.5
             lin_vel_z = -2.0
             ang_vel_xy = -0.05
             orientation = -0.2
             dof_acc = -2.5e-7
             joint_power = -2e-5
-            base_height = -0.9
+            base_height = -1.0
             foot_clearance = -0.02
             action_rate = -0.01
-            smoothness = -0.05
+            smoothness = -0.03
             feet_air_time = 0.00
             collision = -0.0
             feet_stumble = -0.0
@@ -171,7 +171,7 @@ class MybotV3WithArmRoughCfg(LeggedRobotCfg):
             dof_vel_limits = -0.0
             torque_limits = -0.0
             # hip_pos = -0.0
-            rear_thigh_pos = -0.2
+            rear_thigh_pos = -0.00
             dof_pos = -0.1
 
         dof_pos_hip_weight = 4.0
@@ -182,15 +182,27 @@ class MybotV3WithArmRoughCfg(LeggedRobotCfg):
         soft_dof_pos_limit = 1.0
         soft_dof_vel_limit = 1.0
         soft_torque_limit = 1.0
-        base_height_target = 0.33
+        base_height_target = 0.32
         max_contact_force = 100.0
-        clearance_height_target = -0.23
+        clearance_height_target = -0.21
 
 
 class MybotV3WithArmRoughCfgPPO(LeggedRobotCfgPPO):
     class algorithm(LeggedRobotCfgPPO.algorithm):
         entropy_coef = 0.01
-
+        
+        # training params
+        value_loss_coef = 1.0   
+        use_clipped_value_loss = True
+        clip_param = 0.2
+        num_learning_epochs = 5
+        num_mini_batches = 4 # mini batch size = num_envs*nsteps / nminibatches
+        learning_rate = 1.e-3 #5.e-4
+        schedule = 'adaptive' # could be adaptive, fixed
+        gamma = 0.99
+        lam = 0.95
+        desired_kl = 0.01
+        max_grad_norm = 10.
     class runner(LeggedRobotCfgPPO.runner):
         run_name = ""
         experiment_name = "rough_mybot_v3_with_arm"

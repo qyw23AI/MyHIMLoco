@@ -9,6 +9,9 @@ From repo root:
 
 ```bash
 python legged_gym/legged_gym/scripts/train.py --task mybot_v3 --headless --rl_device cuda:0 --num_envs 4096 --max_iterations 5000
+
+python legged_gym/legged_gym/scripts/train.py --task mybot_v3_with_arm --headless  --max_iterations 5000
+
 ```
 
 ## Resume training from model_700.pt
