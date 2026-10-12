@@ -1,3 +1,6 @@
 [submodule "GettingHimLoco"]
 	path = GettingHimLoco
 	url = https://github.com/Getting05/MyHIMLoco.git
+[submodule "IsaacGymEnvs"]
+	path = IsaacGymEnvs
+	url = https://github.com/qyw23AI/IsaacGymEnvs.git
