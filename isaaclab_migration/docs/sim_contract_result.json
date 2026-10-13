@@ -1,0 +1,11 @@
+{
+  "status": "passed",
+  "num_envs": 8,
+  "checks": [
+    "terminal observation before reset",
+    "unchanged six-frame history across reset",
+    "strict timeout threshold",
+    "no stale timeout",
+    "name-based effort permutation"
+  ]
+}

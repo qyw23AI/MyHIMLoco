@@ -1,0 +1,15 @@
+{
+  "status": "passed",
+  "mesh_type": "trimesh",
+  "terrain_curriculum": true,
+  "command_curriculum": true,
+  "checks": [
+    "nonflat collision terrain",
+    "initial reset leaves levels unchanged",
+    "distance-based promotion 2 to 3",
+    "insufficient-distance demotion 2 to 1",
+    "reset uses updated terrain origin",
+    "finite observations and rewards on actual terrain"
+  ],
+  "note": "Controlled transition probes; not training success statistics"
+}

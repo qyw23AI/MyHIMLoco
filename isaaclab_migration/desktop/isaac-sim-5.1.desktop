@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Isaac Sim 5.1
+Comment=Open the locally installed NVIDIA Isaac Sim editor
+Exec=/home/qyw/.local/bin/isaac-sim-5.1
+TryExec=/home/qyw/miniconda3/envs/himloco/bin/isaacsim
+Icon=/home/qyw/miniconda3/envs/himloco/lib/python3.11/site-packages/isaacsim/kit/resources/desktop-icons/omniverse_128.png
+Path=/home/qyw
+Terminal=false
+StartupNotify=true
+Categories=Development;
+Keywords=Isaac;Robotics;Simulation;NVIDIA;

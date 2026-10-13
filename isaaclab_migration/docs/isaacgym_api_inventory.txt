@@ -1,0 +1,226 @@
+legged_gym/legged_gym/envs/base/base_task.py:32 [import] from isaacgym import gymapi
+legged_gym/legged_gym/envs/base/base_task.py:33 [import] from isaacgym import gymutil
+legged_gym/legged_gym/envs/base/base_task.py:41 [simulation/API] self.gym = gymapi.acquire_gym()
+legged_gym/legged_gym/envs/base/base_task.py:46 [simulation/API] sim_device_type, self.sim_device_id = gymutil.parse_device_str(self.sim_device)
+legged_gym/legged_gym/envs/base/base_task.py:85 [simulation/API] self.gym.prepare_sim(self.sim)
+legged_gym/legged_gym/envs/base/base_task.py:94 [simulation/API] self.viewer = self.gym.create_viewer(
+legged_gym/legged_gym/envs/base/base_task.py:95 [simulation/API] self.sim, gymapi.CameraProperties())
+legged_gym/legged_gym/envs/base/base_task.py:96 [simulation/API] self.gym.subscribe_viewer_keyboard_event(
+legged_gym/legged_gym/envs/base/base_task.py:98 [simulation/API] self.gym.subscribe_viewer_keyboard_event(
+legged_gym/legged_gym/envs/base/base_task.py:123 [simulation/API] if self.gym.query_viewer_has_closed(self.viewer):
+legged_gym/legged_gym/envs/base/base_task.py:127 [simulation/API] for evt in self.gym.query_viewer_action_events(self.viewer):
+legged_gym/legged_gym/envs/base/base_task.py:135 [simulation/API] self.gym.fetch_results(self.sim, True)
+legged_gym/legged_gym/envs/base/base_task.py:139 [simulation/API] self.gym.step_graphics(self.sim)
+legged_gym/legged_gym/envs/base/base_task.py:140 [simulation/API] self.gym.draw_viewer(self.viewer, self.sim, True)
+legged_gym/legged_gym/envs/base/base_task.py:142 [simulation/API] self.gym.sync_frame_time(self.sim)
+legged_gym/legged_gym/envs/base/base_task.py:144 [simulation/API] self.gym.poll_viewer_events(self.viewer)
+legged_gym/legged_gym/envs/base/legged_robot.py:37 [import] from isaacgym.torch_utils import *
+legged_gym/legged_gym/envs/base/legged_robot.py:38 [import] from isaacgym import gymtorch, gymapi, gymutil
+legged_gym/legged_gym/envs/base/legged_robot.py:100 [simulation/API] self.gym.set_dof_actuation_force_tensor(self.sim, gymtorch.unwrap_tensor(self.torques))
+legged_gym/legged_gym/envs/base/legged_robot.py:101 [simulation/API] self.gym.simulate(self.sim)
+legged_gym/legged_gym/envs/base/legged_robot.py:103 [simulation/API] self.gym.fetch_results(self.sim, True)
+legged_gym/legged_gym/envs/base/legged_robot.py:104 [simulation/API] self.gym.refresh_dof_state_tensor(self.sim)
+legged_gym/legged_gym/envs/base/legged_robot.py:119 [simulation/API] self.gym.refresh_actor_root_state_tensor(self.sim)
+legged_gym/legged_gym/envs/base/legged_robot.py:120 [simulation/API] self.gym.refresh_net_contact_force_tensor(self.sim)
+legged_gym/legged_gym/envs/base/legged_robot.py:121 [simulation/API] self.gym.refresh_rigid_body_state_tensor(self.sim)
+legged_gym/legged_gym/envs/base/legged_robot.py:128 [tensor math] self.base_lin_vel[:] = quat_rotate_inverse(self.base_quat, self.root_states[:, 7:10])
+legged_gym/legged_gym/envs/base/legged_robot.py:129 [tensor math] self.base_ang_vel[:] = quat_rotate_inverse(self.base_quat, self.root_states[:, 10:13])
+legged_gym/legged_gym/envs/base/legged_robot.py:130 [tensor math] self.projected_gravity[:] = quat_rotate_inverse(self.base_quat, self.gravity_vec)
+legged_gym/legged_gym/envs/base/legged_robot.py:202 [tensor math] self.Kp_factors[env_ids] = torch_rand_float(self.cfg.domain_rand.kp_range[0], self.cfg.domain_rand.kp_range[1], (len(env_ids), 1), device=self.device)
+legged_gym/legged_gym/envs/base/legged_robot.py:204 [tensor math] self.Kd_factors[env_ids] = torch_rand_float(self.cfg.domain_rand.kd_range[0], self.cfg.domain_rand.kd_range[1], (len(env_ids), 1), device=self.device)
+legged_gym/legged_gym/envs/base/legged_robot.py:206 [tensor math] self.motor_strength_factors[env_ids] = torch_rand_float(self.cfg.domain_rand.motor_strength_range[0], self.cfg.domain_rand.motor_strength_range[1], (len(env_ids), 1), device=self.device)
+legged_gym/legged_gym/envs/base/legged_robot.py:317 [simulation/API] self.sim = self.gym.create_sim(self.sim_device_id, self.graphics_device_id, self.physics_engine, self.sim_params)
+legged_gym/legged_gym/envs/base/legged_robot.py:341 [simulation/API] cam_pos = gymapi.Vec3(position[0], position[1], position[2])
+legged_gym/legged_gym/envs/base/legged_robot.py:342 [simulation/API] cam_target = gymapi.Vec3(lookat[0], lookat[1], lookat[2])
+legged_gym/legged_gym/envs/base/legged_robot.py:343 [simulation/API] self.gym.viewer_camera_look_at(self.viewer, None, cam_pos, cam_target)
+legged_gym/legged_gym/envs/base/legged_robot.py:362 [tensor math] self.friction_coeffs = torch_rand_float(friction_range[0], friction_range[1], (self.num_envs,1), device=self.device)
+legged_gym/legged_gym/envs/base/legged_robot.py:371 [tensor math] self.restitution_coeffs = torch_rand_float(restitution_range[0], restitution_range[1], (self.num_envs,1), device=self.device)
+legged_gym/legged_gym/envs/base/legged_robot.py:380 [tensor math] self.friction_coeffs[env_ids] = torch_rand_float(self.cfg.domain_rand.friction_range[0], self.cfg.domain_rand.friction_range[1], (len(env_ids), 1), device=self.device)
+legged_gym/legged_gym/envs/base/legged_robot.py:382 [tensor math] self.restitution_coeffs[env_ids] = torch_rand_float(self.cfg.domain_rand.restitution_range[0], self.cfg.domain_rand.restitution_range[1], (len(env_ids), 1), device=self.device)
+legged_gym/legged_gym/envs/base/legged_robot.py:385 [simulation/API] rigid_shape_props = self.gym.get_actor_rigid_shape_properties(self.envs[env_id], 0)
+legged_gym/legged_gym/envs/base/legged_robot.py:391 [simulation/API] self.gym.set_actor_rigid_shape_properties(self.envs[env_id], 0, rigid_shape_props)
+legged_gym/legged_gym/envs/base/legged_robot.py:444 [simulation/API] props[0].com = gymapi.Vec3(self.com_displacement[env_id, 0], self.com_displacement[env_id, 1], self.com_displacement[env_id, 2])
+legged_gym/legged_gym/envs/base/legged_robot.py:462 [tensor math] forward = quat_apply(self.base_quat, self.forward_vec)
+legged_gym/legged_gym/envs/base/legged_robot.py:479 [tensor math] self.commands[env_ids, 0] = torch_rand_float(-1.0, 1.0, (len(env_ids), 1), device=self.device).squeeze(1)
+legged_gym/legged_gym/envs/base/legged_robot.py:480 [tensor math] self.commands[env_ids, 1] = torch_rand_float(self.command_ranges["lin_vel_y"][0], self.command_ranges["lin_vel_y"][1], (len(env_ids), 1), device=self.device).squeeze(1)
+legged_gym/legged_gym/envs/base/legged_robot.py:482 [tensor math] self.commands[env_ids, 3] = torch_rand_float(self.command_ranges["heading"][0], self.command_ranges["heading"][1], (len(env_ids), 1), device=self.device).squeeze(1)
+legged_gym/legged_gym/envs/base/legged_robot.py:484 [tensor math] self.commands[env_ids, 2] = torch_rand_float(self.command_ranges["ang_vel_yaw"][0], self.command_ranges["ang_vel_yaw"][1], (len(env_ids), 1), device=self.device).squeeze(1)
+legged_gym/legged_gym/envs/base/legged_robot.py:489 [tensor math] self.commands[high_vel_env_ids, 0] = torch_rand_float(self.command_ranges["lin_vel_x"][0], self.command_ranges["lin_vel_x"][1], (len(high_vel_env_ids), 1), device=self.device).squeeze(1)
+legged_gym/legged_gym/envs/base/legged_robot.py:532 [tensor math] self.dof_pos[env_ids] = self.default_dof_pos * torch_rand_float(0.5, 1.5, (len(env_ids), self.num_dof), device=self.device)
+legged_gym/legged_gym/envs/base/legged_robot.py:536 [simulation/API] self.gym.set_dof_state_tensor_indexed(self.sim,
+legged_gym/legged_gym/envs/base/legged_robot.py:537 [simulation/API] gymtorch.unwrap_tensor(self.dof_state),
+legged_gym/legged_gym/envs/base/legged_robot.py:538 [simulation/API] gymtorch.unwrap_tensor(env_ids_int32), len(env_ids_int32))
+legged_gym/legged_gym/envs/base/legged_robot.py:550 [tensor math] self.root_states[env_ids, :2] += torch_rand_float(-1., 1., (len(env_ids), 2), device=self.device) # xy position within 1m of the center
+legged_gym/legged_gym/envs/base/legged_robot.py:555 [tensor math] self.root_states[env_ids, 7:13] = torch_rand_float(-0.5, 0.5, (len(env_ids), 6), device=self.device) # [7:10]: lin vel, [10:13]: ang vel
+legged_gym/legged_gym/envs/base/legged_robot.py:557 [simulation/API] self.gym.set_actor_root_state_tensor_indexed(self.sim,
+legged_gym/legged_gym/envs/base/legged_robot.py:558 [simulation/API] gymtorch.unwrap_tensor(self.root_states),
+legged_gym/legged_gym/envs/base/legged_robot.py:559 [simulation/API] gymtorch.unwrap_tensor(env_ids_int32), len(env_ids_int32))
+legged_gym/legged_gym/envs/base/legged_robot.py:565 [tensor math] self.root_states[:, 7:9] = torch_rand_float(-max_vel, max_vel, (self.num_envs, 2), device=self.device) # lin vel x/y
+legged_gym/legged_gym/envs/base/legged_robot.py:566 [simulation/API] self.gym.set_actor_root_state_tensor(self.sim, gymtorch.unwrap_tensor(self.root_states))
+legged_gym/legged_gym/envs/base/legged_robot.py:571 [tensor math] disturbance = torch_rand_float(self.cfg.domain_rand.disturbance_range[0], self.cfg.domain_rand.disturbance_range[1], (self.num_envs, 3), device=self.device)
+legged_gym/legged_gym/envs/base/legged_robot.py:573 [simulation/API] self.gym.apply_rigid_body_force_tensors(self.sim, forceTensor=gymtorch.unwrap_tensor(self.disturbance), space=gymapi.CoordinateSpace.LOCAL_SPACE)
+legged_gym/legged_gym/envs/base/legged_robot.py:647 [simulation/API] actor_root_state = self.gym.acquire_actor_root_state_tensor(self.sim)
+legged_gym/legged_gym/envs/base/legged_robot.py:648 [simulation/API] dof_state_tensor = self.gym.acquire_dof_state_tensor(self.sim)
+legged_gym/legged_gym/envs/base/legged_robot.py:649 [simulation/API] net_contact_forces = self.gym.acquire_net_contact_force_tensor(self.sim)
+legged_gym/legged_gym/envs/base/legged_robot.py:650 [simulation/API] rigid_body_state = self.gym.acquire_rigid_body_state_tensor(self.sim)
+legged_gym/legged_gym/envs/base/legged_robot.py:651 [simulation/API] self.gym.refresh_dof_state_tensor(self.sim)
+legged_gym/legged_gym/envs/base/legged_robot.py:652 [simulation/API] self.gym.refresh_actor_root_state_tensor(self.sim)
+legged_gym/legged_gym/envs/base/legged_robot.py:653 [simulation/API] self.gym.refresh_net_contact_force_tensor(self.sim)
+legged_gym/legged_gym/envs/base/legged_robot.py:654 [simulation/API] self.gym.refresh_rigid_body_state_tensor(self.sim)
+legged_gym/legged_gym/envs/base/legged_robot.py:657 [simulation/API] self.root_states = gymtorch.wrap_tensor(actor_root_state)
+legged_gym/legged_gym/envs/base/legged_robot.py:658 [simulation/API] self.dof_state = gymtorch.wrap_tensor(dof_state_tensor)
+legged_gym/legged_gym/envs/base/legged_robot.py:659 [simulation/API] self.rigid_body_states = gymtorch.wrap_tensor(rigid_body_state)
+legged_gym/legged_gym/envs/base/legged_robot.py:666 [simulation/API] self.contact_forces = gymtorch.wrap_tensor(net_contact_forces).view(self.num_envs, -1, 3) # shape: num_envs, num_bodies, xyz axis
+legged_gym/legged_gym/envs/base/legged_robot.py:672 [tensor math] self.gravity_vec = to_torch(get_axis_params(-1., self.up_axis_idx), device=self.device).repeat((self.num_envs, 1))
+legged_gym/legged_gym/envs/base/legged_robot.py:673 [tensor math] self.forward_vec = to_torch([1., 0., 0.], device=self.device).repeat((self.num_envs, 1))
+legged_gym/legged_gym/envs/base/legged_robot.py:686 [tensor math] self.base_lin_vel = quat_rotate_inverse(self.base_quat, self.root_states[:, 7:10])
+legged_gym/legged_gym/envs/base/legged_robot.py:687 [tensor math] self.base_ang_vel = quat_rotate_inverse(self.base_quat, self.root_states[:, 10:13])
+legged_gym/legged_gym/envs/base/legged_robot.py:688 [tensor math] self.projected_gravity = quat_rotate_inverse(self.base_quat, self.gravity_vec)
+legged_gym/legged_gym/envs/base/legged_robot.py:733 [tensor math] self.Kp_factors = torch_rand_float(self.cfg.domain_rand.kp_range[0], self.cfg.domain_rand.kp_range[1], (self.num_envs, 1), device=self.device)
+legged_gym/legged_gym/envs/base/legged_robot.py:735 [tensor math] self.Kd_factors = torch_rand_float(self.cfg.domain_rand.kd_range[0], self.cfg.domain_rand.kd_range[1], (self.num_envs, 1), device=self.device)
+legged_gym/legged_gym/envs/base/legged_robot.py:737 [tensor math] self.motor_strength_factors = torch_rand_float(self.cfg.domain_rand.motor_strength_range[0], self.cfg.domain_rand.motor_strength_range[1], (self.num_envs, 1), device=self.device)
+legged_gym/legged_gym/envs/base/legged_robot.py:739 [tensor math] self.payload = torch_rand_float(self.cfg.domain_rand.payload_mass_range[0], self.cfg.domain_rand.payload_mass_range[1], (self.num_envs, 1), device=self.device)
+legged_gym/legged_gym/envs/base/legged_robot.py:741 [tensor math] self.com_displacement = torch_rand_float(self.cfg.domain_rand.com_displacement_range[0], self.cfg.domain_rand.com_displacement_range[1], (self.num_envs, 3), device=self.device)
+legged_gym/legged_gym/envs/base/legged_robot.py:776 [simulation/API] plane_params = gymapi.PlaneParams()
+legged_gym/legged_gym/envs/base/legged_robot.py:777 [simulation/API] plane_params.normal = gymapi.Vec3(0.0, 0.0, 1.0)
+legged_gym/legged_gym/envs/base/legged_robot.py:781 [simulation/API] self.gym.add_ground(self.sim, plane_params)
+legged_gym/legged_gym/envs/base/legged_robot.py:786 [simulation/API] hf_params = gymapi.HeightFieldParams()
+legged_gym/legged_gym/envs/base/legged_robot.py:799 [simulation/API] self.gym.add_heightfield(self.sim, self.terrain.heightsamples, hf_params)
+legged_gym/legged_gym/envs/base/legged_robot.py:805 [simulation/API] tm_params = gymapi.TriangleMeshParams()
+legged_gym/legged_gym/envs/base/legged_robot.py:815 [simulation/API] self.gym.add_triangle_mesh(self.sim, self.terrain.vertices.flatten(order='C'), self.terrain.triangles.flatten(order='C'), tm_params)
+legged_gym/legged_gym/envs/base/legged_robot.py:831 [simulation/API] asset_options = gymapi.AssetOptions()
+legged_gym/legged_gym/envs/base/legged_robot.py:846 [simulation/API] robot_asset = self.gym.load_asset(self.sim, asset_root, asset_file, asset_options)
+legged_gym/legged_gym/envs/base/legged_robot.py:847 [simulation/API] self.num_dof = self.gym.get_asset_dof_count(robot_asset)
+legged_gym/legged_gym/envs/base/legged_robot.py:848 [simulation/API] self.num_bodies = self.gym.get_asset_rigid_body_count(robot_asset)
+legged_gym/legged_gym/envs/base/legged_robot.py:849 [simulation/API] dof_props_asset = self.gym.get_asset_dof_properties(robot_asset)
+legged_gym/legged_gym/envs/base/legged_robot.py:850 [simulation/API] rigid_shape_props_asset = self.gym.get_asset_rigid_shape_properties(robot_asset)
+legged_gym/legged_gym/envs/base/legged_robot.py:853 [simulation/API] body_names = self.gym.get_asset_rigid_body_names(robot_asset)
+legged_gym/legged_gym/envs/base/legged_robot.py:854 [simulation/API] self.dof_names = self.gym.get_asset_dof_names(robot_asset)
+legged_gym/legged_gym/envs/base/legged_robot.py:868 [tensor math] self.base_init_state = to_torch(base_init_state_list, device=self.device, requires_grad=False)
+legged_gym/legged_gym/envs/base/legged_robot.py:869 [simulation/API] start_pose = gymapi.Transform()
+legged_gym/legged_gym/envs/base/legged_robot.py:870 [simulation/API] start_pose.p = gymapi.Vec3(*self.base_init_state[:3])
+legged_gym/legged_gym/envs/base/legged_robot.py:873 [simulation/API] env_lower = gymapi.Vec3(0., 0., 0.)
+legged_gym/legged_gym/envs/base/legged_robot.py:874 [simulation/API] env_upper = gymapi.Vec3(0., 0., 0.)
+legged_gym/legged_gym/envs/base/legged_robot.py:881 [tensor math] self.payload = torch_rand_float(self.cfg.domain_rand.payload_mass_range[0], self.cfg.domain_rand.payload_mass_range[1], (self.num_envs, 1), device=self.device)
+legged_gym/legged_gym/envs/base/legged_robot.py:883 [tensor math] self.com_displacement = torch_rand_float(self.cfg.domain_rand.com_displacement_range[0], self.cfg.domain_rand.com_displacement_range[1], (self.num_envs, 3), device=self.device)
+legged_gym/legged_gym/envs/base/legged_robot.py:887 [simulation/API] env_handle = self.gym.create_env(self.sim, env_lower, env_upper, int(np.sqrt(self.num_envs)))
+legged_gym/legged_gym/envs/base/legged_robot.py:889 [tensor math] pos[:2] += torch_rand_float(-1., 1., (2,1), device=self.device).squeeze(1)
+legged_gym/legged_gym/envs/base/legged_robot.py:890 [simulation/API] start_pose.p = gymapi.Vec3(*pos)
+legged_gym/legged_gym/envs/base/legged_robot.py:893 [simulation/API] self.gym.set_asset_rigid_shape_properties(robot_asset, rigid_shape_props)
+legged_gym/legged_gym/envs/base/legged_robot.py:894 [simulation/API] actor_handle = self.gym.create_actor(env_handle, robot_asset, start_pose, self.cfg.asset.name, i, self.cfg.asset.self_collisions, 0)
+legged_gym/legged_gym/envs/base/legged_robot.py:896 [simulation/API] self.gym.set_actor_dof_properties(env_handle, actor_handle, dof_props)
+legged_gym/legged_gym/envs/base/legged_robot.py:897 [simulation/API] body_props = self.gym.get_actor_rigid_body_properties(env_handle, actor_handle)
+legged_gym/legged_gym/envs/base/legged_robot.py:904 [simulation/API] self.gym.set_actor_rigid_body_properties(env_handle, actor_handle, body_props, recomputeInertia=True)
+legged_gym/legged_gym/envs/base/legged_robot.py:910 [simulation/API] self.feet_indices[i] = self.gym.find_actor_rigid_body_handle(self.envs[0], self.actor_handles[0], feet_names[i])
+legged_gym/legged_gym/envs/base/legged_robot.py:914 [simulation/API] self.penalised_contact_indices[i] = self.gym.find_actor_rigid_body_handle(self.envs[0], self.actor_handles[0], penalized_contact_names[i])
+legged_gym/legged_gym/envs/base/legged_robot.py:918 [simulation/API] self.termination_contact_indices[i] = self.gym.find_actor_rigid_body_handle(self.envs[0], self.actor_handles[0], termination_contact_names[i])
+legged_gym/legged_gym/envs/base/legged_robot.py:978 [simulation/API] self.gym.clear_lines(self.viewer)
+legged_gym/legged_gym/envs/base/legged_robot.py:979 [simulation/API] self.gym.refresh_rigid_body_state_tensor(self.sim)
+legged_gym/legged_gym/envs/base/legged_robot.py:980 [simulation/API] sphere_geom = gymutil.WireframeSphereGeometry(0.02, 4, 4, None, color=(1, 1, 0))
+legged_gym/legged_gym/envs/base/legged_robot.py:989 [simulation/API] sphere_pose = gymapi.Transform(gymapi.Vec3(x, y, z), r=None)
+legged_gym/legged_gym/envs/base/legged_robot.py:990 [simulation/API] gymutil.draw_lines(sphere_geom, self.gym, self.viewer, self.envs[i], sphere_pose)
+legged_gym/legged_gym/envs/base/legged_robot.py:1159 [tensor math] footpos_in_body_frame[:, i, :] = quat_rotate_inverse(self.base_quat, cur_footpos_translated[:, i, :])
+legged_gym/legged_gym/envs/base/legged_robot.py:1160 [tensor math] footvel_in_body_frame[:, i, :] = quat_rotate_inverse(self.base_quat, cur_footvel_translated[:, i, :])
+legged_gym/legged_gym/envs/base/legged_robot_field.py:2 [import] from isaacgym.torch_utils import get_euler_xyz, tf_apply, tf_inverse, torch_rand_float
+legged_gym/legged_gym/envs/base/legged_robot_field.py:3 [import] from isaacgym import gymtorch, gymapi, gymutil
+legged_gym/legged_gym/envs/base/legged_robot_field.py:30 [tensor math] r, p, y = get_euler_xyz(self.base_quat)
+legged_gym/legged_gym/envs/base/legged_robot_field.py:175 [tensor math] torch_rand_float(
+legged_gym/legged_gym/envs/base/legged_robot_field.py:181 [simulation/API] self.gym.set_actor_root_state_tensor(self.sim, gymtorch.unwrap_tensor(self.all_root_states))
+legged_gym/legged_gym/envs/base/legged_robot_field.py:276 [tensor math] current_goal_local = tf_apply(
+legged_gym/legged_gym/envs/base/legged_robot_field.py:277 [tensor math] *tf_inverse(self.base_quat, self.root_states[:, :3]),
+legged_gym/legged_gym/envs/base/legged_robot_field.py:413 [simulation/API] sphere_geom = gymutil.WireframeSphereGeometry(0.005, 4, 4, None, color=(0., 1., 0.))
+legged_gym/legged_gym/envs/base/legged_robot_field.py:414 [simulation/API] sphere_penetrate_geom = gymutil.WireframeSphereGeometry(0.005, 4, 4, None, color=(1., 0.1, 0.))
+legged_gym/legged_gym/envs/base/legged_robot_field.py:419 [simulation/API] sphere_pose = gymapi.Transform(gymapi.Vec3(*self.volume_sample_points[env_idx, point_idx]), r= None)
+legged_gym/legged_gym/envs/base/legged_robot_field.py:421 [simulation/API] gymutil.draw_lines(sphere_penetrate_geom, self.gym, self.viewer, self.envs[env_idx], sphere_pose)
+legged_gym/legged_gym/envs/base/legged_robot_field.py:423 [simulation/API] gymutil.draw_lines(sphere_geom, self.gym, self.viewer, self.envs[env_idx], sphere_pose)
+legged_gym/legged_gym/envs/base/legged_robot_field.py:426 [simulation/API] sphere_geom = gymutil.WireframeSphereGeometry(0.1, 32, 32, None, color=(0., 0.1, 1.))
+legged_gym/legged_gym/envs/base/legged_robot_field.py:428 [simulation/API] sphere_pose = gymapi.Transform(gymapi.Vec3(*self.current_goal_global[env_idx]), r= None)
+legged_gym/legged_gym/envs/base/legged_robot_field.py:429 [simulation/API] gymutil.draw_lines(sphere_geom, self.gym, self.viewer, self.envs[env_idx], sphere_pose)
+legged_gym/legged_gym/envs/base/legged_robot_field.py:439 [simulation/API] sphere_geom = gymutil.WireframeSphereGeometry(0.1, 8, 8, None, color=(0, 0.1, 1))
+legged_gym/legged_gym/envs/base/legged_robot_field.py:442 [simulation/API] sphere_pose = gymapi.Transform(gymapi.Vec3(*point), r= None)
+legged_gym/legged_gym/envs/base/legged_robot_field.py:443 [simulation/API] gymutil.draw_lines(sphere_geom, self.gym, self.viewer, self.envs[0], sphere_pose)
+legged_gym/legged_gym/envs/base/legged_robot_field.py:503 [tensor math] yaw = get_euler_xyz(self.root_states[:, 3:7])[2]
+legged_gym/legged_gym/envs/base/legged_robot_field.py:527 [tensor math] roll, pitch, yaw = get_euler_xyz(self.root_states[:, 3:7])
+legged_gym/legged_gym/envs/base/legged_robot_field.py:566 [tensor math] roll, pitch, yaw = get_euler_xyz(self.root_states[:, 3:7])
+legged_gym/legged_gym/envs/base/legged_robot_field.py:586 [tensor math] roll, pitch, yaw = get_euler_xyz(self.root_states[:, 3:7])
+legged_gym/legged_gym/scripts/play.py:34 [import] import isaacgym
+legged_gym/legged_gym/scripts/terrain_viewer.py:46 [import] import isaacgym
+legged_gym/legged_gym/scripts/terrain_viewer.py:47 [import] from isaacgym import gymapi, gymutil
+legged_gym/legged_gym/scripts/terrain_viewer.py:232 [simulation/API] gym = gymapi.acquire_gym()
+legged_gym/legged_gym/scripts/terrain_viewer.py:235 [simulation/API] sim_params = gymapi.SimParams()
+legged_gym/legged_gym/scripts/terrain_viewer.py:241 [simulation/API] sim_params.gravity = gymapi.Vec3(0.0, 0.0, -9.81)
+legged_gym/legged_gym/scripts/terrain_viewer.py:256 [simulation/API] sim = gym.create_sim(sim_device_id, graphics_device_id, physics_engine, sim_params)
+legged_gym/legged_gym/scripts/terrain_viewer.py:286 [simulation/API] plane_params = gymapi.PlaneParams()
+legged_gym/legged_gym/scripts/terrain_viewer.py:287 [simulation/API] plane_params.normal = gymapi.Vec3(0.0, 0.0, 1.0)  # Z-up
+legged_gym/legged_gym/scripts/terrain_viewer.py:292 [simulation/API] gym.add_ground(sim, plane_params)
+legged_gym/legged_gym/scripts/terrain_viewer.py:298 [simulation/API] camera_props = gymapi.CameraProperties()
+legged_gym/legged_gym/scripts/terrain_viewer.py:299 [simulation/API] viewer = gym.create_viewer(sim, camera_props)
+legged_gym/legged_gym/scripts/terrain_viewer.py:315 [simulation/API] cam_pos = gymapi.Vec3(
+legged_gym/legged_gym/scripts/terrain_viewer.py:320 [simulation/API] cam_target = gymapi.Vec3(
+legged_gym/legged_gym/scripts/terrain_viewer.py:325 [simulation/API] gym.viewer_camera_look_at(viewer, None, cam_pos, cam_target)
+legged_gym/legged_gym/scripts/terrain_viewer.py:377 [simulation/API] while not gym.query_viewer_has_closed(viewer):
+legged_gym/legged_gym/scripts/terrain_viewer.py:379 [simulation/API] for evt in gym.query_viewer_action_events(viewer):
+legged_gym/legged_gym/scripts/terrain_viewer.py:381 [simulation/API] gym.destroy_viewer(viewer)
+legged_gym/legged_gym/scripts/terrain_viewer.py:389 [simulation/API] gym.simulate(sim)
+legged_gym/legged_gym/scripts/terrain_viewer.py:390 [simulation/API] gym.fetch_results(sim, True)
+legged_gym/legged_gym/scripts/terrain_viewer.py:391 [simulation/API] gym.step_graphics(sim)
+legged_gym/legged_gym/scripts/terrain_viewer.py:392 [simulation/API] gym.draw_viewer(viewer, sim, True)
+legged_gym/legged_gym/scripts/terrain_viewer.py:393 [simulation/API] gym.sync_frame_time(sim)
+legged_gym/legged_gym/scripts/terrain_viewer.py:395 [simulation/API] gym.destroy_viewer(viewer)
+legged_gym/legged_gym/scripts/test_init_height.py:16 [import] from isaacgym import gymtorch
+legged_gym/legged_gym/scripts/test_init_height.py:177 [simulation/API] gymtorch.unwrap_tensor(
+legged_gym/legged_gym/scripts/train.py:35 [import] import isaacgym
+legged_gym/legged_gym/tests/test_env.py:35 [import] import isaacgym
+legged_gym/legged_gym/utils/helpers.py:36 [import] from isaacgym import gymapi
+legged_gym/legged_gym/utils/helpers.py:37 [import] from isaacgym import gymutil
+legged_gym/legged_gym/utils/helpers.py:83 [simulation/API] sim_params = gymapi.SimParams()
+legged_gym/legged_gym/utils/helpers.py:96 [simulation/API] gymutil.parse_sim_config(cfg["sim"], sim_params)
+legged_gym/legged_gym/utils/helpers.py:172 [simulation/API] args = gymutil.parse_arguments(
+legged_gym/legged_gym/utils/math.py:34 [import] from isaacgym.torch_utils import quat_apply, normalize
+legged_gym/legged_gym/utils/math.py:41 [tensor math] quat_yaw = normalize(quat_yaw)
+legged_gym/legged_gym/utils/math.py:42 [tensor math] return quat_apply(quat_yaw, vec)
+legged_gym/legged_gym/utils/terrain/barrier_track.py:5 [import] from isaacgym import gymapi, gymutil
+legged_gym/legged_gym/utils/terrain/barrier_track.py:6 [import] from isaacgym.terrain_utils import convert_heightfield_to_trimesh
+legged_gym/legged_gym/utils/terrain/barrier_track.py:1605 [simulation/API] tm_params = gymapi.TriangleMeshParams()
+legged_gym/legged_gym/utils/terrain/barrier_track.py:1614 [simulation/API] self.gym.add_triangle_mesh(
+legged_gym/legged_gym/utils/terrain/barrier_track.py:2449 [simulation/API] geom = gymutil.WireframeBoxGeometry(
+legged_gym/legged_gym/utils/terrain/barrier_track.py:2456 [simulation/API] pose = gymapi.Transform(gymapi.Vec3(
+legged_gym/legged_gym/utils/terrain/barrier_track.py:2461 [simulation/API] gymutil.draw_lines(
+legged_gym/legged_gym/utils/terrain/barrier_track.py:2476 [simulation/API] geom = gymutil.WireframeBoxGeometry(
+legged_gym/legged_gym/utils/terrain/barrier_track.py:2484 [simulation/API] pose = gymapi.Transform(gymapi.Vec3(
+legged_gym/legged_gym/utils/terrain/barrier_track.py:2489 [simulation/API] gymutil.draw_lines(
+legged_gym/legged_gym/utils/terrain/barrier_track.py:2496 [simulation/API] pose = gymapi.Transform(gymapi.Vec3(
+legged_gym/legged_gym/utils/terrain/barrier_track.py:2501 [simulation/API] gymutil.draw_lines(
+legged_gym/legged_gym/utils/terrain/barrier_track.py:2516 [simulation/API] geom = gymutil.WireframeBoxGeometry(
+legged_gym/legged_gym/utils/terrain/barrier_track.py:2523 [simulation/API] pose = gymapi.Transform(gymapi.Vec3(
+legged_gym/legged_gym/utils/terrain/barrier_track.py:2528 [simulation/API] gymutil.draw_lines(
+legged_gym/legged_gym/utils/terrain/barrier_track.py:2544 [simulation/API] geom = gymutil.WireframeBoxGeometry(
+legged_gym/legged_gym/utils/terrain/barrier_track.py:2551 [simulation/API] pose = gymapi.Transform(gymapi.Vec3(
+legged_gym/legged_gym/utils/terrain/barrier_track.py:2556 [simulation/API] gymutil.draw_lines(
+legged_gym/legged_gym/utils/terrain/barrier_track.py:2579 [simulation/API] geom = gymutil.WireframeBoxGeometry(
+legged_gym/legged_gym/utils/terrain/barrier_track.py:2586 [simulation/API] pose = gymapi.Transform(gymapi.Vec3(
+legged_gym/legged_gym/utils/terrain/barrier_track.py:2591 [simulation/API] gymutil.draw_lines(
+legged_gym/legged_gym/utils/terrain/barrier_track.py:2675 [simulation/API] geom = gymutil.WireframeBoxGeometry(
+legged_gym/legged_gym/utils/terrain/barrier_track.py:2682 [simulation/API] pose = gymapi.Transform(gymapi.Vec3(
+legged_gym/legged_gym/utils/terrain/barrier_track.py:2687 [simulation/API] gymutil.draw_lines(geom, self.gym, self.viewer, None, pose)
+legged_gym/legged_gym/utils/terrain/barrier_track.py:2715 [simulation/API] geom = gymutil.WireframeBoxGeometry(
+legged_gym/legged_gym/utils/terrain/barrier_track.py:2722 [simulation/API] pose = gymapi.Transform(gymapi.Vec3(
+legged_gym/legged_gym/utils/terrain/barrier_track.py:2727 [simulation/API] gymutil.draw_lines(geom, self.gym, self.viewer, None, pose)
+legged_gym/legged_gym/utils/terrain/perlin.py:6 [import] from isaacgym import terrain_utils, gymapi
+legged_gym/legged_gym/utils/terrain/perlin.py:30 [simulation/API] self.vertices, self.triangles = terrain_utils.convert_heightfield_to_trimesh(   self.heightsamples,
+legged_gym/legged_gym/utils/terrain/perlin.py:77 [simulation/API] tm_params = gymapi.TriangleMeshParams()
+legged_gym/legged_gym/utils/terrain/perlin.py:86 [simulation/API] self.gym.add_triangle_mesh(
+legged_gym/legged_gym/utils/terrain/terrain.py:36 [import] from isaacgym import terrain_utils
+legged_gym/legged_gym/utils/terrain/terrain.py:71 [simulation/API] self.vertices, self.triangles = terrain_utils.convert_heightfield_to_trimesh(   self.height_field_raw,
+legged_gym/legged_gym/utils/terrain/terrain.py:101 [simulation/API] terrain = terrain_utils.SubTerrain("terrain",
+legged_gym/legged_gym/utils/terrain/terrain.py:111 [simulation/API] terrain = terrain_utils.SubTerrain(   "terrain",
+legged_gym/legged_gym/utils/terrain/terrain.py:126 [simulation/API] terrain_utils.pyramid_sloped_terrain(terrain, slope=slope, platform_size=3.)
+legged_gym/legged_gym/utils/terrain/terrain.py:128 [simulation/API] terrain_utils.pyramid_sloped_terrain(terrain, slope=slope, platform_size=3.)
+legged_gym/legged_gym/utils/terrain/terrain.py:129 [simulation/API] terrain_utils.random_uniform_terrain(terrain, min_height=-0.05, max_height=0.05, step=0.005, downsampled_scale=0.2)
+legged_gym/legged_gym/utils/terrain/terrain.py:133 [simulation/API] terrain_utils.pyramid_stairs_terrain(terrain, step_width=0.31, step_height=step_height, platform_size=3.)
+legged_gym/legged_gym/utils/terrain/terrain.py:138 [simulation/API] terrain_utils.discrete_obstacles_terrain(terrain, discrete_obstacles_height, rectangle_min_size, rectangle_max_size, num_rectangles, platform_size=3.)
+legged_gym/legged_gym/utils/terrain/terrain.py:140 [simulation/API] terrain_utils.stepping_stones_terrain(terrain, stone_size=stepping_stones_size, stone_distance=stone_distance, max_height=0., platform_size=4.)
+legged_gym/legged_gym/utils/terrain/terrain.py:170 [simulation/API] hf_params = gym.HeightFieldParams()
+legged_gym/legged_gym/utils/terrain/terrain.py:183 [simulation/API] self.gym.add_heightfield(sim, self.heightsamples, hf_params)
+legged_gym/legged_gym/utils/terrain/terrain.py:188 [simulation/API] tm_params = gym.TriangleMeshParams()
+legged_gym/legged_gym/utils/terrain/terrain.py:198 [simulation/API] self.gym.add_triangle_mesh(self.sim, self.vertices.flatten(order='C'), self.triangles.flatten(order='C'), tm_params)
