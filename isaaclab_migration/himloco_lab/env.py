@@ -22,6 +22,9 @@ class HIMLabEnv(DirectRLEnv):
         self.contact_ids=[self.contacts.body_names.index(n) for n in self.robot.body_names]
         self.pending_force=torch.zeros(self.num_envs,self.robot.num_bodies,3,device=self.device)
         core_cls=HIMFieldCore if cfg.legacy.terrain.selected=='BarrierTrack' else HIMCore
+        if hasattr(cfg.legacy, 'gait'):
+            from .task_gait.core import TaskGaitCore
+            core_cls = TaskGaitCore
         self.core=core_cls(self)
         # Gym creates actors at legacy terrain origins before the first reset.
         # Lab clones start on its centered grid; leaving those poses here would
@@ -83,6 +86,9 @@ class HIMLabEnv(DirectRLEnv):
             create_prim_from_mesh('/World/ground',mesh,physics_material=material)
         elif c.terrain.mesh_type in ['trimesh','heightfield']:
             from .terrain.rough import Terrain
+            if hasattr(c, 'gait') and c.gait.terrain_kind == 'gentle':
+                from .task_gait.terrain import GentleTerrain
+                Terrain = GentleTerrain
             from .terrain.heightfield import convert_heightfield_to_trimesh
             self.terrain=Terrain(c.terrain,self.num_envs)
             if not hasattr(self.terrain,'vertices'):
@@ -157,6 +163,8 @@ class HIMLabEnv(DirectRLEnv):
 
     def _pre_physics_step(self,actions):
         c=self.core
+        if hasattr(c, 'begin_control_step'):
+            c.begin_control_step()
         c.actions=actions.clamp(-c.cfg.normalization.clip_actions,c.cfg.normalization.clip_actions)
         delay=torch.randint(0,self.cfg.decimation,(self.num_envs,1),device=self.device)
         c.delayed_actions=c.actions[:,None,:].repeat(1,self.cfg.decimation,1)

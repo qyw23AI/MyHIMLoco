@@ -95,7 +95,8 @@ class ContractTests(unittest.TestCase):
         for task in TASKS:
             c,_=load_config(task);_,names,_,_=asset_contract(c)
             self.assertEqual(len(names),c.env.num_actions)
-            self.assertEqual(c.env.num_one_step_observations,9+3*len(names))
+            extra = 4 if hasattr(c, 'gait') else 0
+            self.assertEqual(c.env.num_one_step_observations,9+3*len(names)+extra)
             self.assertEqual(c.env.num_observations,6*c.env.num_one_step_observations)
             self.assertEqual(c.env.num_privileged_obs,c.env.num_one_step_observations+6+187)
         c,_=load_config('mybot_v3');self.assertEqual(asset_contract(c)[1][0:3],['FL_hip_joint','FL_thigh_joint','FL_calf_joint'])

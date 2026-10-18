@@ -1,5 +1,7 @@
 # HIMLoco → Isaac Lab 独立迁移
 
+任务赛底层规律步态、低速控制与独立训练入口见 [TASK_GAIT.md](docs/TASK_GAIT.md)。
+
 迁移实现位于本目录。原 `legged_gym`、`rsl_rl` 和已有 Isaac Lab 安装保持原样；训练直接导入本仓库 `rsl_rl/rsl_rl`，不安装官方 RSL-RL 来替换 HIM 实现。
 
 ## 当前运行环境

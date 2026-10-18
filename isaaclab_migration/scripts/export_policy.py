@@ -19,6 +19,11 @@ parser.add_argument('--output', required=True, type=Path)
 parser.add_argument('--task', choices=TASKS, default='mybot_v3')
 args = parser.parse_args()
 cfg, train = load_config(args.task)
+if args.task == 'mybot_v3_task_gait':
+    from himloco_lab.task_gait.checkpoint import saved_task_config
+    cfg = saved_task_config(args.checkpoint)
+    stored = torch.load(args.checkpoint, map_location='cpu', weights_only=True)
+    train = stored['infos'].get('training_config', train)
 model = HIMActorCritic(cfg.env.num_observations, cfg.env.num_privileged_obs,
                       cfg.env.num_one_step_observations, cfg.env.num_actions, **train['policy'])
 checkpoint = torch.load(args.checkpoint, map_location='cpu', weights_only=True)

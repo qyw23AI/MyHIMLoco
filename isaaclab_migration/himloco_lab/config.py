@@ -6,6 +6,7 @@ import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[2]
 TASKS = {
+    'mybot_v3_task_gait': None,  # independent profile, loaded lazily below
     'a1': ('a1.a1_config', 'A1RoughCfg'),
     'go1': ('go1.go1_config', 'Go1RoughCfg'),
     'aliengo': ('aliengo.aliengo_config', 'AlienGoRoughCfg'),
@@ -25,7 +26,12 @@ def class_to_dict(obj):
     return {k: class_to_dict(getattr(obj,k)) for k in dir(obj)
             if not k.startswith('_') and not callable(getattr(obj,k))}
 
-def load_config(task='mybot_v3', num_envs=1024, stage=3):
+def load_config(task='mybot_v3', num_envs=1024, stage=3, gait_phase='basic'):
+    if task == 'mybot_v3_task_gait':
+        if stage not in (3, 4):
+            raise ValueError('Task gait uses HIM training stages 3/4 only')
+        from .task_gait.config import build_config
+        return build_config(num_envs, gait_phase)
     module, name = TASKS[task]
     mod = import_module('himloco_lab.legacy.'+module)
     cfg = copy.deepcopy(getattr(mod,name)())

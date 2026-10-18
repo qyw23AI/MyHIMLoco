@@ -43,6 +43,10 @@ try:
     from himloco_lab.config import asset_contract
 
     cfg,_=load_config(args.task,args.num_envs,args.stage)
+    if args.task=='mybot_v3_task_gait':
+        from himloco_lab.task_gait.checkpoint import config_from_policy
+        cfg,_=config_from_policy(args.policy,args.num_envs)
+        args.stage=4 if cfg.gait.phase=='robust' else 3
     # Same playback overrides as the repository's original play.py.
     cfg.noise.add_noise=False
     for flag in ['randomize_friction','push_robots','disturbance','randomize_payload_mass']:
@@ -82,7 +86,11 @@ try:
     with torch.inference_mode():
         while app.is_running() and time.monotonic()<deadline:
             tick=time.monotonic()
-            env.core.commands[:,:3]=torch.tensor(args.command,device=env.device)
+            if hasattr(cfg,'gait'):
+                env.core.set_command(args.command)
+                env.core.prepare_external_observation()
+            else:
+                env.core.commands[:,:3]=torch.tensor(args.command,device=env.device)
             actions=policy(wrapped.get_observations())
             if not torch.isfinite(actions).all():raise RuntimeError('Nonfinite playback actions')
             result=wrapped.step(actions)

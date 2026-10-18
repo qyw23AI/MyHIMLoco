@@ -16,6 +16,8 @@ parser.add_argument('--iterations',type=int,default=None)
 parser.add_argument('--steps',type=int,default=500,help='Standing test policy steps')
 parser.add_argument('--rollout_steps',type=int,default=None,help='Explicit smoke-test override; default retains original 100/24')
 parser.add_argument('--seed',type=int,default=1)
+parser.add_argument('--gait_phase', choices=['basic','precision','robust'], default=None)
+parser.add_argument('--gait_ablation', choices=['baseline','timing','full'], default=None)
 parser.add_argument('--checkpoint',type=Path)
 parser.add_argument('--log_dir',type=Path)
 parser.add_argument('--export_policy',type=Path,help='Export validated TorchScript encoder+actor after HIM training')
@@ -28,6 +30,10 @@ parser.add_argument('--viewer_resolution',type=int,nargs=2,metavar=('WIDTH','HEI
 parser.add_argument('--antialiasing',choices=['Off','FXAA','DLSS','DLAA','TAA'])
 AppLauncher.add_app_launcher_args(parser)
 args=parser.parse_args()
+if args.task=='mybot_v3_task_gait':
+    if args.stage not in (3,4):parser.error('Task gait requires HIM stage 3/4')
+elif args.gait_phase or args.gait_ablation:
+    parser.error('Gait options require --task mybot_v3_task_gait')
 if args.capture_dir and args.headless:parser.error('--capture_dir requires a GUI launch without --headless')
 if args.export_policy and args.stage in (1,2):parser.error('--export_policy requires HIM stage 3 or 4')
 if args.viewer_resolution and (args.headless or min(args.viewer_resolution)<=0):
@@ -45,6 +51,10 @@ try:
     from himloco_lab.adapter import LegacyRunnerAdapter
     torch.manual_seed(args.seed); np.random.seed(args.seed)
     cfg,train=load_config(args.task,args.num_envs,args.stage)
+    if args.task=='mybot_v3_task_gait':
+        from himloco_lab.task_gait.checkpoint import resolve_training_config
+        cfg,train=resolve_training_config(args.num_envs,args.gait_phase,args.checkpoint,args.gait_ablation)
+        args.stage=4 if cfg.gait.phase=='robust' else 3
     lab_cfg=make_env_cfg(cfg,args.stage,args.device); lab_cfg.seed=args.seed
     if args.antialiasing:lab_cfg.sim.render.antialiasing_mode=args.antialiasing
     if args.viewer_resolution:lab_cfg.viewer.resolution=tuple(args.viewer_resolution)
@@ -68,6 +78,9 @@ try:
     if args.stage==4 and cfg.terrain.curriculum and env.terrain is not None:
         from himloco_lab.curriculum import CurriculumMonitor
         wrapped.diagnostics=CurriculumMonitor(env,log)
+    if hasattr(cfg,'gait'):
+        from himloco_lab.task_gait.metrics import TaskGaitMonitor
+        wrapped.diagnostics=TaskGaitMonitor(env,log)
     if args.stage==1:
         wrapped.reset(); failures=0; minimum_height=100.; max_joint_error=0.
         for _ in range(args.steps):
@@ -85,6 +98,8 @@ try:
             train['runner']['policy_class_name']='ActorCritic';train['runner']['algorithm_class_name']='PPO'
         else:
             from rsl_rl.runners import HIMOnPolicyRunner as Runner
+            if hasattr(cfg,'gait'):
+                from himloco_lab.task_gait.runner import TaskGaitRunner as Runner
         if args.rollout_steps:train['runner']['num_steps_per_env']=args.rollout_steps
         # Persist the effective training config after stage/rollout overrides.
         (log/'config.json').write_text(json.dumps({'env':class_to_dict(cfg),'train':train,'args':{k:str(v) if isinstance(v,Path) else v for k,v in vars(args).items()}},indent=2))
@@ -96,7 +111,8 @@ try:
     report=validate_runtime(env)
     if wrapped.diagnostics is not None:
         curriculum=wrapped.diagnostics.save()
-        report['terrain_curriculum']=curriculum['final']
+        report['gait_metrics' if hasattr(cfg,'gait') else 'terrain_curriculum']=(
+            curriculum if hasattr(cfg,'gait') else curriculum['final'])
     report.update(stage=args.stage,task=args.task,num_envs=args.num_envs,status='passed',
         peak_gpu_used_mib=monitor.stop(),peak_torch_allocated_gib=torch.cuda.max_memory_allocated()/2**30 if torch.cuda.is_available() else 0.)
     if args.stage!=1:
@@ -123,6 +139,7 @@ try:
         if wrapped.capture is not None:
             print('PREVIEW_CAPTURED',wrapped.capture.capture_final(env.sim,'preview.png'),flush=True)
     wrapped.close()
+    print('RUN_COMPLETED',log.resolve(),flush=True)
 except BaseException:
     import traceback
     traceback.print_exc()

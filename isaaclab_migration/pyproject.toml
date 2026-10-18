@@ -5,6 +5,6 @@ build-backend = "setuptools.build_meta"
 name = "himloco-lab"
 version = "0.1.0"
 requires-python = ">=3.11,<3.12"
-dependencies = ["tensorboard", "numpy<2", "scipy", "trimesh"]
+dependencies = ["tensorboard", "numpy<2", "scipy", "trimesh", "matplotlib"]
 [tool.setuptools.packages.find]
 include = ["himloco_lab*"]

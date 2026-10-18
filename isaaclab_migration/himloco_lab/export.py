@@ -66,5 +66,13 @@ def export_policy(actor_critic, output, cfg, checkpoint=None):
         'checkpoint': str(Path(checkpoint).resolve()) if checkpoint else None,
         'round_trip_max_error': float((actual - expected).abs().max()),
     }
+    if hasattr(cfg, 'gait'):
+        from .config import class_to_dict
+        from .task_gait.config import TASK
+        meta.update(task=TASK, task_config=class_to_dict(cfg),
+                    history_order='newest first; reset histories warm-start from new sensor frame')
+        meta['frame_order'] += ['sin phase', 'cos phase', 'gait activation', 'standby mode']
+        meta['controller_note'] = 'Run task_gait.reference.GaitState every control dt; encoder+actor alone does not implement command smoothing or phase state.'
+        meta['load_note'] = 'Torque metrics are proxies, not motor temperature predictions or certified continuous limits.'
     output.with_suffix('.json').write_text(json.dumps(meta, indent=2))
     return meta
