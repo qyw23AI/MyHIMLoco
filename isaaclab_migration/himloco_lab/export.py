@@ -42,7 +42,10 @@ def export_policy(actor_critic, output, cfg, checkpoint=None):
             actual = reloaded(sample)
     finally:
         actor_critic.train(was_training)
-    torch.testing.assert_close(actual, expected, rtol=1e-6, atol=1e-6)
+    # CUDA inference and the CPU TorchScript round trip can differ by a few
+    # float32 ULPs.  Keep this strict enough to catch a wiring/order mismatch
+    # while allowing the observed cross-device numerical noise.
+    torch.testing.assert_close(actual, expected, rtol=1e-5, atol=3e-6)
     if not torch.isfinite(actual).all():
         raise RuntimeError('Export produced nonfinite actions')
     _, joint_names, _, _ = asset_contract(cfg)
