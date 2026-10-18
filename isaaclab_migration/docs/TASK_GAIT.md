@@ -38,9 +38,15 @@ bash isaaclab_migration/scripts/task_gait.sh play --checkpoint /absolute/path/mo
   --command 0.03 0 0 --seconds 60
 bash isaaclab_migration/scripts/task_gait.sh play --policy /absolute/path/policy.pt \
   --command 0 0 0 --standby
+
+# 对已有实验补录，或只录某个模型。
+bash isaaclab_migration/scripts/task_gait.sh record isaaclab_migration/logs/task_basic \
+  --only 2000
 ```
 
 `TASK_GAIT_PYTHON=/path/to/python` 可覆盖解释器。训练参数沿用 `train.py`，课程参数用 `--phase`，消融用 `--gait_ablation baseline|timing|full`。每个新实验使用独立 `--log_dir`；不复用正在写入的目录。脚本不安装依赖、不改驱动、不自动覆盖/删除已有模型。
+
+正式 `train` 完成并验证后，脚本会自动为该实验的每个永久 `model_N.pt` 录制 `checkpoint_videos/model_N/preview.mp4`。沿用 WMP 回放参数：4 环境、1000 控制步（20 秒仿真）、每 10 步采样一帧、5 fps、H.264、镜头跟随首个机器人；任务赛在自己的地形上使用固定前进指令 0.5 m/s。每个目录还包含 PNG、`state.csv`、`validation.json` 和 `run.log`。已经有视频的模型默认跳过，`record ... --overwrite` 可重录；`train --no-videos` 可推迟录制。自动录制在训练进程结束后运行，因此不会与 2048 环境训练同时占用显存。录像失败会使脚本返回错误，已保存的模型仍保留。
 
 ## 课程和初始参数
 

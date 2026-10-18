@@ -17,6 +17,7 @@ parser.add_argument('--task',choices=TASKS,default='mybot_v3')
 parser.add_argument('--num_envs',type=int,default=4)
 parser.add_argument('--stage',type=int,choices=[3,4],default=3)
 parser.add_argument('--seconds',type=float,default=30.,help='0 keeps the viewer running until closed')
+parser.add_argument('--steps',type=int,default=None,help='Exact control steps for reproducible checkpoint videos')
 parser.add_argument('--command',type=float,nargs=3,default=[1.,0.,0.],metavar=('VX','VY','YAW'))
 parser.add_argument('--capture_dir',type=Path)
 parser.add_argument('--capture_every',type=int,default=4)
@@ -29,6 +30,7 @@ parser.add_argument('--terrain_color',type=float,nargs=3,metavar=('R','G','B'),h
 AppLauncher.add_app_launcher_args(parser)
 args=parser.parse_args()
 if args.capture_dir and args.headless:parser.error('viewport capture requires GUI')
+if args.steps is not None and args.steps < 1:parser.error('--steps must be positive')
 if args.viewer_resolution and (args.headless or min(args.viewer_resolution)<=0):
     parser.error('--viewer_resolution requires GUI and positive width/height')
 if args.terrain_color and (min(args.terrain_color)<0 or max(args.terrain_color)>1):
@@ -84,7 +86,7 @@ try:
     print('PLAYBACK_STARTED',args.policy.resolve(),
           'camera='+lab_cfg.viewer.origin_type,flush=True)
     with torch.inference_mode():
-        while app.is_running() and time.monotonic()<deadline:
+        while app.is_running() and (step < args.steps if args.steps is not None else time.monotonic()<deadline):
             tick=time.monotonic()
             if hasattr(cfg,'gait'):
                 env.core.set_command(args.command)
@@ -103,6 +105,8 @@ try:
                              float(c.root_states[0,2]),float(result[2][0]),bool(result[3][0])])
             step+=1
             if args.realtime:time.sleep(max(0.,env.step_dt-(time.monotonic()-tick)))
+    if args.steps is not None and step != args.steps:
+        raise RuntimeError(f'Playback stopped at {step}/{args.steps} control steps')
     if wrapped.capture is not None:
         print('PLAYBACK_CAPTURED',wrapped.capture.capture_final(env.sim,'playback.png'),flush=True)
     if args.state_csv:

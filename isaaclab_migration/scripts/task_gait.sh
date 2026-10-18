@@ -26,6 +26,7 @@ case "$ACTION" in
         # --phase is a human-facing alias; all other options go to train.py.
         EXTRA=()
         GUI=false
+        RECORD_VIDEOS=true
         TASK_LOG_DIR="$TASK_ROOT/isaaclab_migration/logs/mybot_v3_task_gait/run_$(date +%Y%m%d_%H%M%S)_$$"
         while (($#)); do
             case "$1" in
@@ -33,6 +34,7 @@ case "$ACTION" in
                     [[ $# -ge 2 ]] || { echo '--phase needs basic, precision or robust' >&2; exit 2; }
                     EXTRA+=(--gait_phase "$2"); shift 2 ;;
                 --gui) GUI=true; shift ;;
+                --no-videos) RECORD_VIDEOS=false; shift ;;
                 --log_dir)
                     [[ $# -ge 2 ]] || { echo '--log_dir needs a path' >&2; exit 2; }
                     TASK_LOG_DIR="$2"; shift 2 ;;
@@ -61,6 +63,12 @@ if json.loads((folder / 'validation.json').read_text()).get('status') != 'passed
     raise SystemExit('Training validation failed')
 print('TRAINING_VERIFIED', folder.resolve())
 PY
+        # The training GPU context is closed before replaying checkpoints.
+        # This keeps the 2048-env training run independent of GUI rendering.
+        if [[ "$ACTION" == train ]] && "$RECORD_VIDEOS"; then
+            "$TASK_PYTHON" isaaclab_migration/scripts/record_task_gait_checkpoints.py "$TASK_LOG_DIR" \
+                2>&1 | tee "$TASK_LOG_DIR/checkpoint_videos.log"
+        fi
         ;;
     evaluate|play)
         EVAL_ARGS=(--num_envs 64 --headless)
@@ -89,6 +97,11 @@ json.loads((folder / 'evaluation.json').read_text())
 print('EVALUATION_VERIFIED', folder.resolve())
 PY
         ;;
+    record)
+        [[ $# -ge 1 ]] || { echo 'record needs CHECKPOINT_DIR' >&2; exit 2; }
+        TASK_CHECKPOINT_DIR="$1"; shift
+        exec "$TASK_PYTHON" isaaclab_migration/scripts/record_task_gait_checkpoints.py "$TASK_CHECKPOINT_DIR" "$@"
+        ;;
     *)
         cat <<'HELP'
 Usage: bash isaaclab_migration/scripts/task_gait.sh ACTION [options]
@@ -97,9 +110,11 @@ Usage: bash isaaclab_migration/scripts/task_gait.sh ACTION [options]
   train --phase basic          2048 envs, headless; --num_envs 3072 is supported
   train --phase precision --checkpoint /absolute/path/model.pt
   train --phase robust --checkpoint /absolute/path/model.pt
+  record CHECKPOINT_DIR [--only 2000] [--overwrite]
   evaluate --checkpoint /absolute/path/model.pt [--short --seconds 3]
   play --checkpoint /absolute/path/model.pt [--command 0.03 0 0] [--standby]
-Train options: --iterations N --seed N --log_dir PATH --export_policy PATH --gui
+Train options: --iterations N --seed N --log_dir PATH --export_policy PATH --gui --no-videos
+After training, each permanent checkpoint gets a 20 s, 4-env, 5 fps MP4 in CHECKPOINT_DIR/checkpoint_videos.
 Only new task-gait checkpoints can resume. Old 270-input policies are incompatible.
 TASK_GAIT_PYTHON overrides the Python executable; this script installs nothing.
 HELP
