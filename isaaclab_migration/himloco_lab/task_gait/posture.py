@@ -1,10 +1,7 @@
 """Opt-in posture experiments; unchanged observations and legacy reward behavior."""
 from types import SimpleNamespace
 import torch
-
-
-EXPERIMENTS = ('baseline', 'height', 'hip', 'gait', 'combined',
-               'combined_tracking1', 'combined_tracking1p5', 'no_constraints')
+from .experiments import EXPERIMENTS
 
 
 def apply_experiment(cfg, name):

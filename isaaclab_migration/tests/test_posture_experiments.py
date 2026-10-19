@@ -12,11 +12,17 @@ sys.path.insert(0, str(ROOT / 'rsl_rl'))
 import torch
 from himloco_lab.config import load_config, class_to_dict, asset_contract
 from himloco_lab.task_gait.core import TaskGaitCore
-from himloco_lab.task_gait.posture import apply_experiment, PostureStats
+from himloco_lab.task_gait.posture import apply_experiment, PostureStats, EXPERIMENTS
 from himloco_lab.task_gait.reference import GaitState
 
 
 class PostureExperimentTests(unittest.TestCase):
+    def test_no_constraints_is_supported_by_training_cli(self):
+        source = (ROOT / 'isaaclab_migration/scripts/train.py').read_text()
+        self.assertIn('choices=POSTURE_EXPERIMENTS', source)
+        self.assertIn('from himloco_lab.task_gait.experiments import EXPERIMENTS as POSTURE_EXPERIMENTS', source)
+        self.assertIn('no_constraints', EXPERIMENTS)
+
     def fixture(self):
         c = TaskGaitCore.__new__(TaskGaitCore)
         c.cfg, self.train = load_config('mybot_v3_task_gait', 2, gait_phase='precision')
