@@ -13,7 +13,7 @@ import time
 
 ROOT = Path(__file__).resolve().parents[2]
 PYTHON = Path(sys.executable).resolve()
-ARMS = ('task_gait_current', 'legacy_rewards')
+ARMS = ('task_gait_current', 'task_gait_no_gait_rewards', 'legacy_rewards')
 
 
 def write_json(path, value):
@@ -44,25 +44,26 @@ def compact(evaluation):
 
 
 def paired_differences(results):
-    paired = {}
+    paired = {arm: {} for arm in ARMS if arm != 'task_gait_current'}
     for seed in results['task_gait_current']:
         current = results['task_gait_current'][seed]
-        legacy = results['legacy_rewards'].get(seed)
-        if legacy is None:
-            continue
-        per_case = {}
-        for name, new in legacy.items():
-            old = current[name]
-            delta = {}
-            for key in ('height_mae_m', 'low_height_fraction', 'slip', 'tilt', 'survival'):
-                a, b = new[key], old[key]
-                delta[key] = None if a is None or b is None else a - b
-            for key in ('command_mae', 'swing_touch', 'apex_clearance_m'):
-                a, b = new[key], old[key]
-                delta[key] = [None if x is None or y is None else x - y
-                              for x, y in zip(a, b)]
-            per_case[name] = delta
-        paired[seed] = per_case
+        for arm in paired:
+            variant = results[arm].get(seed)
+            if variant is None:
+                continue
+            per_case = {}
+            for name, new in variant.items():
+                old = current[name]
+                delta = {}
+                for key in ('height_mae_m', 'low_height_fraction', 'slip', 'tilt', 'survival'):
+                    a, b = new[key], old[key]
+                    delta[key] = None if a is None or b is None else a - b
+                for key in ('command_mae', 'swing_touch', 'apex_clearance_m'):
+                    a, b = new[key], old[key]
+                    delta[key] = [None if x is None or y is None else x - y
+                                  for x, y in zip(a, b)]
+                per_case[name] = delta
+            paired[arm][seed] = per_case
     return paired
 
 
@@ -71,7 +72,7 @@ def main():
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--num_envs', type=int, default=1024)
     parser.add_argument('--rollout_steps', type=int, default=100)
-    parser.add_argument('--iterations', type=int, default=2000)
+    parser.add_argument('--iterations', type=int, default=1000)
     parser.add_argument('--seeds', type=int, nargs='+', default=[17])
     parser.add_argument('--eval_envs', type=int, default=32)
     parser.add_argument('--eval_seconds', type=float, default=8.)
@@ -88,7 +89,7 @@ def main():
         parser.error(f'Output directory is not empty; refusing to overwrite: {output}')
     output.mkdir(parents=True, exist_ok=True)
     plan = dict(
-        comparison='From-scratch paired comparison; reward configuration is the only intended difference.',
+        comparison='Three-arm from-scratch paired comparison; reward configuration is the only intended difference.',
         task='mybot_v3_task_gait', phase='precision', source_checkpoint=None,
         initialization='random actor/critic initialization; no --checkpoint supplied',
         legacy_reward_source=str(ROOT / 'isaaclab_migration/himloco_lab/legacy/mybot_v3/mybot_v3_config.py'),
@@ -222,9 +223,9 @@ def main():
                 status['current_arm'], status['current_seed'], status['operation'] = None, None, None
                 update()
         comparison = dict(plan=plan, metrics_by_arm_and_seed=status['results'],
-                          legacy_minus_current_by_seed=paired_differences(status['results']),
+                          differences_vs_task_gait_current_by_arm_and_seed=paired_differences(status['results']),
                           completed=status['completed'],
-                          limitations=['Only reward scales differ by design; both arms retain task-gait phase/activation inputs and reference controller.',
+        limitations=['Only reward scales differ by design; all arms retain task-gait phase/activation inputs and reference controller.',
                                         'This first pass uses one paired seed; replicate a clear difference before assigning a general cause.',
                                         'Simulation torque metrics do not establish real motor thermal safety.'])
         write_json(output / 'comparison.json', comparison)

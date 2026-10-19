@@ -25,6 +25,7 @@ class PostureExperimentTests(unittest.TestCase):
 
     def test_reward_comparison_arms_are_supported(self):
         self.assertIn('task_gait_current', EXPERIMENTS)
+        self.assertIn('task_gait_no_gait_rewards', EXPERIMENTS)
         self.assertIn('legacy_rewards', EXPERIMENTS)
 
     def fixture(self):
@@ -159,6 +160,15 @@ class PostureExperimentTests(unittest.TestCase):
         for name, value in actual.items():
             if name not in expected:
                 self.assertEqual(value, 0., name)
+
+    def test_task_gait_no_gait_rewards_only_zeros_the_five_gait_terms(self):
+        cfg, _ = load_config('mybot_v3_task_gait', 2, gait_phase='precision')
+        expected = class_to_dict(cfg.rewards.scales)
+        apply_experiment(cfg, 'task_gait_no_gait_rewards')
+        actual = class_to_dict(cfg.rewards.scales)
+        disabled = {'gait_contact', 'gait_position', 'gait_clearance', 'gait_stand', 'gait_load'}
+        for name, value in expected.items():
+            self.assertEqual(actual[name], 0. if name in disabled else value, name)
 
     def test_effective_configuration_in_tensorboard(self):
         from himloco_lab.task_gait.run_log import record_run, write_tensorboard_config, write_posture_scalars

@@ -28,6 +28,10 @@ def apply_experiment(cfg, name):
     scales.gait_stand, scales.gait_load = -.1, -.15
     if name == 'task_gait_current':
         return
+    if name == 'task_gait_no_gait_rewards':
+        scales.gait_contact = scales.gait_position = scales.gait_clearance = 0.
+        scales.gait_stand = scales.gait_load = 0.
+        return
     if name == 'legacy_rewards':
         # Restore pre-migration Mybot V3 reward scales while keeping task-gait
         # observations and controller structure identical for comparison.
