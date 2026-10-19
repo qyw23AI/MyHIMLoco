@@ -114,6 +114,19 @@ class PostureExperimentTests(unittest.TestCase):
             expected = dict(scales, tracking_lin_vel=weight)
             self.assertEqual(class_to_dict(cfg.rewards.scales), expected)
 
+    def test_no_constraints_disables_posture_and_wtw_reward_terms(self):
+        cfg, _ = load_config('mybot_v3_task_gait')
+        apply_experiment(cfg, 'no_constraints')
+        scales = cfg.rewards.scales
+        for name in ('posture_height', 'posture_hip', 'posture_limit',
+                     'posture_clearance', 'posture_position', 'gait_contact',
+                     'gait_clearance', 'gait_position', 'gait_stand', 'gait_load',
+                     'base_height'):
+            self.assertEqual(getattr(scales, name), 0., name)
+        self.assertEqual(scales.tracking_lin_vel, 2.)
+        self.assertEqual(scales.tracking_ang_vel, 1.)
+        self.assertEqual(scales.dof_pos_limits, -1.)
+
     def test_effective_configuration_in_tensorboard(self):
         from himloco_lab.task_gait.run_log import record_run, write_tensorboard_config, write_posture_scalars
         from torch.utils.tensorboard import SummaryWriter

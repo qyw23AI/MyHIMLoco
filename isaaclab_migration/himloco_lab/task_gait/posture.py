@@ -4,7 +4,7 @@ import torch
 
 
 EXPERIMENTS = ('baseline', 'height', 'hip', 'gait', 'combined',
-               'combined_tracking1', 'combined_tracking1p5')
+               'combined_tracking1', 'combined_tracking1p5', 'no_constraints')
 
 
 def apply_experiment(cfg, name):
@@ -28,6 +28,15 @@ def apply_experiment(cfg, name):
     scales.base_height = -1.
     scales.tracking_lin_vel = 2.
     scales.gait_contact, scales.gait_clearance, scales.gait_position = -.3, -.2, -.15
+    scales.gait_stand, scales.gait_load = -.1, -.15
+    if name == 'no_constraints':
+        # Disable all posture objectives and WTW-style gait reward constraints.
+        # Keep joint-limit protection and the checkpoint-compatible gait
+        # observation/controller structure intact.
+        scales.base_height = 0.
+        scales.gait_contact = scales.gait_clearance = scales.gait_position = 0.
+        scales.gait_stand = scales.gait_load = 0.
+        return
     combined = name.startswith('combined')
     if name == 'height' or combined:
         scales.base_height = 0.
