@@ -4,10 +4,12 @@ import argparse
 import datetime
 import json
 import os
+import select
 from pathlib import Path
 import signal
 import subprocess
 import sys
+import time
 
 ROOT = Path(__file__).resolve().parents[2]
 PYTHON = Path(sys.executable).resolve()
@@ -115,13 +117,38 @@ def main():
     def run(command, log, timeout, operation):
         status['operation'] = operation
         status['command'] = command
+        print(f'\n[{operation}] ' + ' '.join(command), flush=True)
         with log.open('x') as stream:
-            child = subprocess.Popen(command, cwd=ROOT, env=env, stdout=stream,
-                                     stderr=subprocess.STDOUT, start_new_session=True)
+            child = subprocess.Popen(command, cwd=ROOT, env=env, stdout=subprocess.PIPE,
+                                     stderr=subprocess.STDOUT, start_new_session=True, bufsize=0)
             status['child_pid'] = child.pid
             update()
+            deadline = time.monotonic() + timeout
+            fd = child.stdout.fileno()
             try:
-                code = child.wait(timeout=timeout)
+                while True:
+                    remaining = deadline - time.monotonic()
+                    if remaining <= 0:
+                        raise subprocess.TimeoutExpired(command, timeout)
+                    readable, _, _ = select.select([fd], [], [], min(1., remaining))
+                    if readable:
+                        chunk = os.read(fd, 65536)
+                        if not chunk:
+                            break
+                        stream.buffer.write(chunk)
+                        stream.flush()
+                        sys.stdout.buffer.write(chunk)
+                        sys.stdout.flush()
+                    if child.poll() is not None and not readable:
+                        chunk = os.read(fd, 65536)
+                        if chunk:
+                            stream.buffer.write(chunk)
+                            stream.flush()
+                            sys.stdout.buffer.write(chunk)
+                            sys.stdout.flush()
+                            continue
+                        break
+                code = child.wait()
             except BaseException:
                 os.killpg(child.pid, signal.SIGTERM)
                 try:
@@ -130,9 +157,12 @@ def main():
                     os.killpg(child.pid, signal.SIGKILL)
                     child.wait()
                 raise
+            finally:
+                child.stdout.close()
         status.pop('child_pid', None)
         if code:
             raise RuntimeError(f'{operation} exited {code}; inspect {log}')
+        print(f'[{operation}] verified exit 0; log={log}', flush=True)
 
     try:
         for arm in ARMS:
