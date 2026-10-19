@@ -18,7 +18,7 @@ parser.add_argument('--rollout_steps',type=int,default=None,help='Explicit smoke
 parser.add_argument('--seed',type=int,default=1)
 parser.add_argument('--gait_phase', choices=['basic','precision','robust'], default=None)
 parser.add_argument('--gait_ablation', choices=['baseline','timing','full'], default=None)
-parser.add_argument('--posture_experiment', choices=['baseline','height','hip','gait','combined','combined_tracking1'], default=None,
+parser.add_argument('--posture_experiment', choices=['baseline','height','hip','gait','combined','combined_tracking1','combined_tracking1p5'], default=None,
                     help='Opt-in controlled posture diagnostic arm; saved in checkpoints')
 parser.add_argument('--checkpoint',type=Path)
 parser.add_argument('--log_dir',type=Path)

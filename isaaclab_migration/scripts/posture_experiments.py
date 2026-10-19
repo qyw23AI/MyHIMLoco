@@ -50,7 +50,8 @@ def comparisons(results):
     for arm, cases in results.items():
         if arm == 'baseline':
             continue
-        reference = results.get('combined') if arm == 'combined_tracking1' else control
+        tracking_variant = arm.startswith('combined_tracking')
+        reference = results.get('combined') if tracking_variant else control
         if reference is None:
             continue
         paired = {}
@@ -64,7 +65,7 @@ def comparisons(results):
                                     for x, y in zip(case[key], old[key])]
             differences['survival'] = case['survival'] - old['survival']
             paired[name] = differences
-        evidence[arm] = dict(reference='combined' if arm == 'combined_tracking1' else 'baseline',
+        evidence[arm] = dict(reference='combined' if tracking_variant else 'baseline',
                              differences_new_minus_reference=paired)
     return dict(status='short_single_seed_adaptation_evidence_only', evidence=evidence,
                 follow_up='Compare normal forward/backward and low speed separately. Repeat control and promising arms to 800-1000 updates and another seed before attributing a main cause.')

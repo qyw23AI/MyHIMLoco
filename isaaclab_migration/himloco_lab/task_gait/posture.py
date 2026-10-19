@@ -3,7 +3,8 @@ from types import SimpleNamespace
 import torch
 
 
-EXPERIMENTS = ('baseline', 'height', 'hip', 'gait', 'combined', 'combined_tracking1')
+EXPERIMENTS = ('baseline', 'height', 'hip', 'gait', 'combined',
+               'combined_tracking1', 'combined_tracking1p5')
 
 
 def apply_experiment(cfg, name):
@@ -27,18 +28,21 @@ def apply_experiment(cfg, name):
     scales.base_height = -1.
     scales.tracking_lin_vel = 2.
     scales.gait_contact, scales.gait_clearance, scales.gait_position = -.3, -.2, -.15
-    if name in ('height', 'combined', 'combined_tracking1'):
+    combined = name.startswith('combined')
+    if name == 'height' or combined:
         scales.base_height = 0.
         scales.posture_height = -.25
-    if name in ('hip', 'combined', 'combined_tracking1'):
+    if name == 'hip' or combined:
         scales.posture_hip, scales.posture_limit = -.3, -.1
-    if name in ('gait', 'combined', 'combined_tracking1'):
+    if name == 'gait' or combined:
         # Replace saturated spatial terms rather than double-count them.
         scales.gait_clearance = scales.gait_position = 0.
         scales.gait_contact = -1.
         scales.posture_clearance, scales.posture_position = -.5, -.3
     if name == 'combined_tracking1':
         scales.tracking_lin_vel = 1.
+    elif name == 'combined_tracking1p5':
+        scales.tracking_lin_vel = 1.5
 
 
 class PostureRewards:

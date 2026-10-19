@@ -104,6 +104,16 @@ class PostureExperimentTests(unittest.TestCase):
         for key, value in old.items():
             self.assertEqual(new[key], value, key)
 
+    def test_speed_variants_only_change_linear_tracking_weight(self):
+        reference, _ = load_config('mybot_v3_task_gait')
+        apply_experiment(reference, 'combined')
+        scales = class_to_dict(reference.rewards.scales)
+        for name, weight in [('combined_tracking1', 1.), ('combined_tracking1p5', 1.5)]:
+            cfg, _ = load_config('mybot_v3_task_gait')
+            apply_experiment(cfg, name)
+            expected = dict(scales, tracking_lin_vel=weight)
+            self.assertEqual(class_to_dict(cfg.rewards.scales), expected)
+
     def test_effective_configuration_in_tensorboard(self):
         from himloco_lab.task_gait.run_log import record_run, write_tensorboard_config, write_posture_scalars
         from torch.utils.tensorboard import SummaryWriter
