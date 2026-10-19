@@ -9,4 +9,6 @@ EXPERIMENTS = (
     'combined_tracking1',
     'combined_tracking1p5',
     'no_constraints',
+    'task_gait_current',
+    'legacy_rewards',
 )

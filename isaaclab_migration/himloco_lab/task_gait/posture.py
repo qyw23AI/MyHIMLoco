@@ -26,6 +26,19 @@ def apply_experiment(cfg, name):
     scales.tracking_lin_vel = 2.
     scales.gait_contact, scales.gait_clearance, scales.gait_position = -.3, -.2, -.15
     scales.gait_stand, scales.gait_load = -.1, -.15
+    if name == 'task_gait_current':
+        return
+    if name == 'legacy_rewards':
+        # Restore pre-migration Mybot V3 reward scales while keeping task-gait
+        # observations and controller structure identical for comparison.
+        from ..config import class_to_dict, load_config
+        legacy, _ = load_config('mybot_v3', cfg.env.num_envs, 3)
+        legacy_scales = class_to_dict(legacy.rewards.scales)
+        for key in vars(scales):
+            setattr(scales, key, legacy_scales.get(key, 0.))
+        for key, value in legacy_scales.items():
+            setattr(scales, key, value)
+        return
     if name == 'no_constraints':
         # Disable all posture objectives and WTW-style gait reward constraints.
         # Keep joint-limit protection and the checkpoint-compatible gait

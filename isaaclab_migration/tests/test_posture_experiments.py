@@ -23,6 +23,10 @@ class PostureExperimentTests(unittest.TestCase):
         self.assertIn('from himloco_lab.task_gait.experiments import EXPERIMENTS as POSTURE_EXPERIMENTS', source)
         self.assertIn('no_constraints', EXPERIMENTS)
 
+    def test_reward_comparison_arms_are_supported(self):
+        self.assertIn('task_gait_current', EXPERIMENTS)
+        self.assertIn('legacy_rewards', EXPERIMENTS)
+
     def fixture(self):
         c = TaskGaitCore.__new__(TaskGaitCore)
         c.cfg, self.train = load_config('mybot_v3_task_gait', 2, gait_phase='precision')
@@ -132,6 +136,29 @@ class PostureExperimentTests(unittest.TestCase):
         self.assertEqual(scales.tracking_lin_vel, 2.)
         self.assertEqual(scales.tracking_ang_vel, 1.)
         self.assertEqual(scales.dof_pos_limits, -1.)
+
+    def test_legacy_rewards_exactly_restore_pre_migration_mybot_v3_scales(self):
+        cfg, _ = load_config('mybot_v3_task_gait', 2, gait_phase='precision')
+        legacy, _ = load_config('mybot_v3', 2, 3)
+        expected = class_to_dict(legacy.rewards.scales)
+        apply_experiment(cfg, 'legacy_rewards')
+        actual = class_to_dict(cfg.rewards.scales)
+        for name, value in expected.items():
+            self.assertEqual(actual[name], value, name)
+        for name, value in actual.items():
+            if name not in expected:
+                self.assertEqual(value, 0., name)
+
+    def test_current_task_gait_reward_arm_preserves_current_scales(self):
+        current, _ = load_config('mybot_v3_task_gait', 2, gait_phase='precision')
+        expected = class_to_dict(current.rewards.scales)
+        apply_experiment(current, 'task_gait_current')
+        actual = class_to_dict(current.rewards.scales)
+        for name, value in expected.items():
+            self.assertEqual(actual[name], value, name)
+        for name, value in actual.items():
+            if name not in expected:
+                self.assertEqual(value, 0., name)
 
     def test_effective_configuration_in_tensorboard(self):
         from himloco_lab.task_gait.run_log import record_run, write_tensorboard_config, write_posture_scalars
