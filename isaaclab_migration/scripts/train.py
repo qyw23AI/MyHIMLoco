@@ -18,6 +18,8 @@ parser.add_argument('--rollout_steps',type=int,default=None,help='Explicit smoke
 parser.add_argument('--seed',type=int,default=1)
 parser.add_argument('--gait_phase', choices=['basic','precision','robust'], default=None)
 parser.add_argument('--gait_ablation', choices=['baseline','timing','full'], default=None)
+parser.add_argument('--posture_experiment', choices=['baseline','height','hip','gait','combined','combined_tracking1'], default=None,
+                    help='Opt-in controlled posture diagnostic arm; saved in checkpoints')
 parser.add_argument('--checkpoint',type=Path)
 parser.add_argument('--log_dir',type=Path)
 parser.add_argument('--export_policy',type=Path,help='Export validated TorchScript encoder+actor after HIM training')
@@ -32,7 +34,7 @@ AppLauncher.add_app_launcher_args(parser)
 args=parser.parse_args()
 if args.task=='mybot_v3_task_gait':
     if args.stage not in (3,4):parser.error('Task gait requires HIM stage 3/4')
-elif args.gait_phase or args.gait_ablation:
+elif args.gait_phase or args.gait_ablation or args.posture_experiment:
     parser.error('Gait options require --task mybot_v3_task_gait')
 if args.capture_dir and args.headless:parser.error('--capture_dir requires a GUI launch without --headless')
 if args.export_policy and args.stage in (1,2):parser.error('--export_policy requires HIM stage 3 or 4')
@@ -54,6 +56,9 @@ try:
     if args.task=='mybot_v3_task_gait':
         from himloco_lab.task_gait.checkpoint import resolve_training_config
         cfg,train=resolve_training_config(args.num_envs,args.gait_phase,args.checkpoint,args.gait_ablation)
+        if args.posture_experiment:
+            from himloco_lab.task_gait.posture import apply_experiment
+            apply_experiment(cfg, args.posture_experiment)
         args.stage=4 if cfg.gait.phase=='robust' else 3
     lab_cfg=make_env_cfg(cfg,args.stage,args.device); lab_cfg.seed=args.seed
     if args.antialiasing:lab_cfg.sim.render.antialiasing_mode=args.antialiasing
@@ -101,8 +106,12 @@ try:
             if hasattr(cfg,'gait'):
                 from himloco_lab.task_gait.runner import TaskGaitRunner as Runner
         if args.rollout_steps:train['runner']['num_steps_per_env']=args.rollout_steps
+        if args.iterations is not None:train['runner']['max_iterations']=args.iterations
         # Persist the effective training config after stage/rollout overrides.
         (log/'config.json').write_text(json.dumps({'env':class_to_dict(cfg),'train':train,'args':{k:str(v) if isinstance(v,Path) else v for k,v in vars(args).items()}},indent=2))
+        if hasattr(cfg, 'gait'):
+            from himloco_lab.task_gait.run_log import record_run
+            record_run(log, cfg, train, args)
         runner=Runner(wrapped,train,log_dir=str(log),device=args.device)
         if args.checkpoint:runner.load(str(args.checkpoint))
         runner.learn(args.iterations if args.iterations is not None else train['runner']['max_iterations'],init_at_random_ep_len=True)

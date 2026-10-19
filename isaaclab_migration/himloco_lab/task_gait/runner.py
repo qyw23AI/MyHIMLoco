@@ -10,7 +10,18 @@ class TaskGaitRunner(HIMOnPolicyRunner):
         # The legacy loop updates its counter only after learn(). Periodic
         # checkpoints must resume AFTER the update whose weights they contain.
         self._completed_iterations = locs['it'] + 1
-        return super().log(locs, *args, **kwargs)
+        result = super().log(locs, *args, **kwargs)
+        from .run_log import write_tensorboard_config, write_posture_scalars
+        if not getattr(self, '_run_config_logged', False):
+            from pathlib import Path
+            if (Path(self.log_dir) / 'run_manifest.json').exists():
+                write_tensorboard_config(self.writer, self.log_dir)
+            self._run_config_logged = True
+            self._run_start_iteration = locs['it']
+        if (locs['it'] - self._run_start_iteration) % 10 == 0 and self.env.diagnostics is not None:
+            write_posture_scalars(self.writer, self.env.diagnostics.report(),
+                                  locs['it'] - self._run_start_iteration)
+        return result
 
     def save(self, path, infos=None):
         info = dict(infos or {})

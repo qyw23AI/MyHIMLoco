@@ -34,6 +34,8 @@ def main():
     parser.add_argument('--num_envs', type=int, default=64)
     parser.add_argument('--seconds', type=float, default=12.)
     parser.add_argument('--short', action='store_true')
+    parser.add_argument('--posture_scan', action='store_true',
+                        help='Short suite plus normal forward/backward; preserves 5-second transitions')
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--seed', type=int, default=17)
     parser.add_argument('--play', action='store_true')
@@ -95,6 +97,11 @@ def main():
         c = env.core
         c.external_commands = True
         suite = [('play', args.command, args.standby)] if args.play else cases(args.short)
+        if args.posture_scan:
+            if args.play:
+                parser.error('--posture_scan cannot be combined with --play')
+            suite = cases(True) + [('forward', [.5, 0., 0.], False),
+                                   ('backward', [-.5, 0., 0.], False)]
         args.output.mkdir(parents=True, exist_ok=True)
         reports, curves = {}, []
         with torch.inference_mode():
@@ -111,12 +118,13 @@ def main():
                 drift_max = torch.zeros(c.num_envs, device=c.device)
                 survived = torch.ones(c.num_envs, device=c.device, dtype=torch.bool)
                 rows = []
-                for step in range(round(args.seconds / c.dt)):
+                case_seconds = max(30., args.seconds) if args.posture_scan and command is None else args.seconds
+                for step in range(round(case_seconds / c.dt)):
                     if not app.is_running():
                         raise RuntimeError('Simulation closed before evaluation completed')
                     tick = time.monotonic()
                     if command is None:
-                        index = min(int(step * c.dt / (args.seconds / 6)), 5)
+                        index = min(int(step * c.dt / (case_seconds / 6)), 5)
                         sequence = [([.2, 0, 0], False), ([.03, 0, 0], False),
                                     ([0, 0, 0], False), ([0, 0, .1], False),
                                     ([0, 0, 0], True), ([0, 0, 0], False)]

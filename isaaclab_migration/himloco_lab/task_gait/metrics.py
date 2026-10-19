@@ -13,6 +13,8 @@ class TaskGaitMonitor:
 
     def reset(self):
         c = self.env.core
+        from .posture import PostureStats
+        self.posture = PostureStats(c)
         self.steps = self.resets = self.samples = 0
         self.error = torch.zeros(3, device=c.device)
         self.raw_error = torch.zeros_like(self.error)
@@ -50,6 +52,7 @@ class TaskGaitMonitor:
         self.previous_target.copy_(c.gait.target)
         self.previous_mode.copy_(c.gait.standby)
         valid = ~done & (self.steady_age >= 1.0)
+        self.posture.update(valid)
         actual = torch.cat((c.base_lin_vel[:, :2], c.base_ang_vel[:, 2:3]), -1)
         err = (actual - c.commands[:, :3]).abs()
         self.samples += int(valid.sum())
@@ -124,6 +127,7 @@ class TaskGaitMonitor:
             torque_peak_nm=c._torque_peak.amax(0).cpu().tolist(),
             saturation_fraction=(c._torque_saturation.sum(0) / (n * c.num_envs)).cpu().tolist(),
             groups=group_rows, snapshots=self.snapshots,
+            posture=self.posture.report(),
             notes=['Steady tracking excludes first second after a command change/reset.',
                    'Torque statistics sample every physics substep, including transients.',
                    'No calibrated thermal model; URDF effort is not a continuous rating.',

@@ -28,7 +28,11 @@ def resolve_training_config(num_envs, phase=None, checkpoint=None, ablation=None
         if phase == saved.gait.phase:
             cfg = saved
             cfg.env.num_envs = num_envs
-        set_ablation(cfg, ablation or saved.gait.ablation)
+            # Resume exact scales, including opt-in posture experiments.
+            if ablation is not None:
+                set_ablation(cfg, ablation)
+        else:
+            set_ablation(cfg, ablation or saved.gait.ablation)
     else:
         cfg, train = build_config(num_envs, phase or 'basic')
         set_ablation(cfg, ablation or 'full')

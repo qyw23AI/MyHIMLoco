@@ -5,9 +5,10 @@ from ..config import asset_contract
 from ..math import quat_apply_yaw
 from .geometry import nominal_feet
 from .reference import GaitState, sample_commands
+from .posture import PostureRewards
 
 
-class TaskGaitCore(HIMCore):
+class TaskGaitCore(PostureRewards, HIMCore):
     def _init_buffers(self):
         super()._init_buffers()
         self.gait = GaitState(self.num_envs, self.cfg.gait, self.device)
