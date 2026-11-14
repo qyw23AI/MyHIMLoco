@@ -1,0 +1,389 @@
+{
+  "profile": "paper_rewards_upstream_a1_source_defaults",
+  "upstream_snapshot": "Getting05/MyHIMLoco@fc1fb0eea798e10a1c3d9267f91ff2b85970e236",
+  "env": {
+    "asset": {
+      "angular_damping": 0.0,
+      "armature": 0.0,
+      "collapse_fixed_joints": false,
+      "default_dof_drive_mode": 3,
+      "density": 0.001,
+      "disable_gravity": false,
+      "file": "{LEGGED_GYM_ROOT_DIR}/resources/robots/a1/urdf/a1.urdf",
+      "fix_base_link": false,
+      "flip_visual_attachments": true,
+      "foot_name": "foot",
+      "linear_damping": 0.0,
+      "max_angular_velocity": 1000.0,
+      "max_linear_velocity": 1000.0,
+      "name": "a1",
+      "penalize_contacts_on": [
+        "thigh",
+        "calf",
+        "base"
+      ],
+      "privileged_contacts_on": [
+        "base",
+        "thigh",
+        "calf"
+      ],
+      "replace_cylinder_with_capsule": true,
+      "self_collisions": 1,
+      "terminate_after_contacts_on": [
+        "base"
+      ],
+      "thickness": 0.01
+    },
+    "commands": {
+      "curriculum": true,
+      "heading_command": true,
+      "max_curriculum": 2.0,
+      "num_commands": 4,
+      "ranges": {
+        "ang_vel_yaw": [
+          -3.14,
+          3.14
+        ],
+        "heading": [
+          -3.14,
+          3.14
+        ],
+        "lin_vel_x": [
+          -1.0,
+          1.0
+        ],
+        "lin_vel_y": [
+          -1.0,
+          1.0
+        ]
+      },
+      "resampling_time": 10.0
+    },
+    "control": {
+      "action_scale": 0.25,
+      "control_type": "P",
+      "damping": {
+        "joint": 1.0
+      },
+      "decimation": 4,
+      "hip_reduction": 1.0,
+      "stiffness": {
+        "joint": 40.0
+      }
+    },
+    "domain_rand": {
+      "com_displacement_range": [
+        -0.1,
+        0.1
+      ],
+      "delay": true,
+      "disturbance": true,
+      "disturbance_interval": 8,
+      "disturbance_range": [
+        -30.0,
+        30.0
+      ],
+      "friction_range": [
+        0.2,
+        2.75
+      ],
+      "initial_joint_pos_range": [
+        0.5,
+        1.5
+      ],
+      "kd_range": [
+        0.8,
+        1.2
+      ],
+      "kp_range": [
+        0.8,
+        1.2
+      ],
+      "link_mass_range": [
+        0.8,
+        1.2
+      ],
+      "max_push_vel_xy": 1.0,
+      "motor_strength_range": [
+        0.8,
+        1.3
+      ],
+      "payload_mass_range": [
+        -1,
+        3
+      ],
+      "push_interval_s": 16,
+      "push_robots": true,
+      "randomize_com_displacement": true,
+      "randomize_friction": true,
+      "randomize_initial_joint_pos": true,
+      "randomize_kd": true,
+      "randomize_kp": true,
+      "randomize_link_mass": true,
+      "randomize_motor_strength": true,
+      "randomize_payload_mass": true,
+      "randomize_restitution": true,
+      "restitution_range": [
+        0.0,
+        1.0
+      ]
+    },
+    "env": {
+      "env_spacing": 3.0,
+      "episode_length_s": 20,
+      "num_actions": 12,
+      "num_envs": 4096,
+      "num_observations": 270,
+      "num_one_step_observations": 45,
+      "num_one_step_privileged_obs": 238,
+      "num_privileged_obs": 238,
+      "send_timeouts": true
+    },
+    "init_state": {
+      "ang_vel": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "default_joint_angles": {
+        "FL_hip_joint": 0.1,
+        "RL_hip_joint": 0.1,
+        "FR_hip_joint": -0.1,
+        "RR_hip_joint": -0.1,
+        "FL_thigh_joint": 0.8,
+        "RL_thigh_joint": 1.0,
+        "FR_thigh_joint": 0.8,
+        "RR_thigh_joint": 1.0,
+        "FL_calf_joint": -1.5,
+        "RL_calf_joint": -1.5,
+        "FR_calf_joint": -1.5,
+        "RR_calf_joint": -1.5
+      },
+      "lin_vel": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "pos": [
+        0.0,
+        0.0,
+        0.42
+      ],
+      "rot": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    "noise": {
+      "add_noise": true,
+      "noise_level": 1.0,
+      "noise_scales": {
+        "ang_vel": 0.2,
+        "dof_pos": 0.01,
+        "dof_vel": 1.5,
+        "gravity": 0.05,
+        "height_measurements": 0.1,
+        "lin_vel": 0.1
+      }
+    },
+    "normalization": {
+      "clip_actions": 100.0,
+      "clip_observations": 100.0,
+      "obs_scales": {
+        "ang_vel": 0.25,
+        "dof_pos": 1.0,
+        "dof_vel": 0.05,
+        "height_measurements": 5.0,
+        "lin_vel": 2.0
+      }
+    },
+    "paper_a1_rewards": true,
+    "rewards": {
+      "base_height_target": 0.3,
+      "clearance_height_target": -0.2,
+      "dof_pos_calf_weight": 5.0,
+      "dof_pos_hip_weight": 5.0,
+      "dof_pos_thigh_weight": 5.0,
+      "max_contact_force": 100.0,
+      "only_positive_rewards": false,
+      "scales": {
+        "action_rate": -0.01,
+        "ang_vel_xy": -0.05,
+        "base_height": -1.0,
+        "collision": 0.0,
+        "dof_acc": -2.5e-07,
+        "dof_pos_limits": 0.0,
+        "dof_vel": 0.0,
+        "dof_vel_limits": 0.0,
+        "feet_air_time": 0.0,
+        "feet_stumble": 0.0,
+        "foot_clearance": -0.01,
+        "joint_power": -2e-05,
+        "lin_vel_z": -2.0,
+        "orientation": -0.2,
+        "smoothness": -0.01,
+        "stand_still": 0.0,
+        "termination": 0.0,
+        "torque_limits": 0.0,
+        "torques": 0.0,
+        "tracking_ang_vel": 0.5,
+        "tracking_lin_vel": 1.0
+      },
+      "soft_dof_pos_limit": 1.0,
+      "soft_dof_vel_limit": 1.0,
+      "soft_torque_limit": 1.0,
+      "tracking_sigma": 0.25
+    },
+    "sim": {
+      "dt": 0.005,
+      "gravity": [
+        0.0,
+        0.0,
+        -9.81
+      ],
+      "physx": {
+        "bounce_threshold_velocity": 0.5,
+        "contact_collection": 2,
+        "contact_offset": 0.01,
+        "default_buffer_size_multiplier": 5,
+        "max_depenetration_velocity": 1.0,
+        "max_gpu_contact_pairs": 8388608,
+        "num_position_iterations": 4,
+        "num_threads": 10,
+        "num_velocity_iterations": 0,
+        "rest_offset": 0.0,
+        "solver_type": 1
+      },
+      "substeps": 1,
+      "up_axis": 1
+    },
+    "terrain": {
+      "BarrierTrack_kwargs": null,
+      "TerrainPerlin_kwargs": null,
+      "border_size": 25,
+      "curriculum": true,
+      "dynamic_friction": 1.0,
+      "horizontal_scale": 0.1,
+      "max_init_terrain_level": 5,
+      "measure_heights": true,
+      "measured_points_x": [
+        -0.8,
+        -0.7,
+        -0.6,
+        -0.5,
+        -0.4,
+        -0.3,
+        -0.2,
+        -0.1,
+        0.0,
+        0.1,
+        0.2,
+        0.3,
+        0.4,
+        0.5,
+        0.6,
+        0.7,
+        0.8
+      ],
+      "measured_points_y": [
+        -0.5,
+        -0.4,
+        -0.3,
+        -0.2,
+        -0.1,
+        0.0,
+        0.1,
+        0.2,
+        0.3,
+        0.4,
+        0.5
+      ],
+      "mesh_type": "trimesh",
+      "num_cols": 20,
+      "num_rows": 10,
+      "pad_unavailable_info": false,
+      "restitution": 0.0,
+      "selected": null,
+      "slope_treshold": 0.75,
+      "static_friction": 1.0,
+      "terrain_kwargs": null,
+      "terrain_length": 8.0,
+      "terrain_proportions": [
+        0.1,
+        0.2,
+        0.3,
+        0.3,
+        0.1
+      ],
+      "terrain_width": 8.0,
+      "vertical_scale": 0.005
+    },
+    "viewer": {
+      "lookat": [
+        11.0,
+        5,
+        3.0
+      ],
+      "pos": [
+        10,
+        0,
+        6
+      ],
+      "ref_env": 0
+    }
+  },
+  "train": {
+    "algorithm": {
+      "clip_param": 0.2,
+      "desired_kl": 0.01,
+      "entropy_coef": 0.01,
+      "gamma": 0.99,
+      "lam": 0.95,
+      "learning_rate": 0.001,
+      "max_grad_norm": 10.0,
+      "num_learning_epochs": 5,
+      "num_mini_batches": 4,
+      "schedule": "adaptive",
+      "use_clipped_value_loss": true,
+      "value_loss_coef": 1.0
+    },
+    "policy": {
+      "activation": "elu",
+      "actor_hidden_dims": [
+        512,
+        256,
+        128
+      ],
+      "critic_hidden_dims": [
+        512,
+        256,
+        128
+      ],
+      "init_noise_std": 1.0
+    },
+    "runner": {
+      "algorithm_class_name": "HIMPPO",
+      "checkpoint": -1,
+      "experiment_name": "rough_a1",
+      "load_run": -1,
+      "max_iterations": 5000,
+      "num_steps_per_env": 100,
+      "policy_class_name": "HIMActorCritic",
+      "resume": false,
+      "resume_path": null,
+      "run_name": "",
+      "save_interval": 100
+    },
+    "runner_class_name": "HIMOnPolicyRunner",
+    "seed": 1
+  },
+  "run_overrides": {
+    "task": "a1",
+    "stage": 4,
+    "num_envs": 4096,
+    "rollout_steps": 100,
+    "iterations": 5000
+  }
+}

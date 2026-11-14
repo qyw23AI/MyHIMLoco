@@ -17,6 +17,8 @@ TASKS = {
     'mybot_v3_with_arm': ('mybot_v3_with_arm.mybot_v3_with_arm_config', 'MybotV3WithArmRoughCfg'),
     'mybot_v3_bridge_a': ('mybot_v3.mybot_v3_bridge_a_config', 'MybotV3BridgeACfg'),
     'mybot_v3_bridge_b': ('mybot_v3.mybot_v3_bridge_b_config', 'MybotV3BridgeBCfg'),
+    'wblwbl_dog_v1': ('wblwbl_dog_v1.wblwbl_dog_v1_config', 'WblwblDogV1Cfg'),
+    'wblwbl_dog_v1_crouch': ('wblwbl_dog_v1.wblwbl_dog_v1_crouch_config', 'WblwblDogV1CrouchCfg'),
 }
 
 def class_to_dict(obj):
@@ -57,7 +59,6 @@ def asset_contract(cfg):
     if path.suffix == '.xml':
         return mjcf_contract(path,cfg)
     tree = ET.parse(path)
-    joints = [j for j in tree.getroot().findall('joint') if j.attrib['type'] != 'fixed']
     # Gym loads articulations depth-first; this repository's URDF sibling order defines the policy order.
     children = {}
     child_links = set()
@@ -75,15 +76,16 @@ def asset_contract(cfg):
     if len(names)!=cfg.env.num_actions or set(names)!=set(cfg.init_state.default_joint_angles):
         raise ValueError(f'URDF/algorithm joint mismatch: {names}; actions={cfg.env.num_actions}')
     limits={j.attrib['name']: {k:float(v) for k,v in j.find('limit').attrib.items()} for j in ordered}
-    meshes=[]
     for m in tree.iter('mesh'):
-        name=m.attrib['filename']
-        if name.startswith('package://'):
-            name=name.split('/',3)[-1]; candidate=path.parent.parent/name
-        else: candidate=path.parent/name
-        if not candidate.exists(): raise FileNotFoundError(candidate)
-        meshes.append(candidate.resolve())
+        _urdf_mesh_path(path, m.attrib['filename'])
     return path, names, limits, roots[0]
+
+
+def _urdf_mesh_path(path, filename):
+    if filename.startswith('package://'):
+        # The URDF lives under <local ROS package>/urdf/.
+        return (path.parent.parent / filename.split('/', 3)[-1]).resolve(strict=True)
+    return (path.parent / filename).resolve(strict=True)
 
 
 def mjcf_contract(path,cfg):
@@ -120,4 +122,28 @@ def prepare_mjcf(path):
     if not link.exists():link.symlink_to(meshdir,target_is_directory=True)
     compiler.set('meshdir','meshes')
     tree.write(out,encoding='utf-8',xml_declaration=True)
+    return out
+
+
+def prepare_urdf(path):
+    """Resolve local ROS package mesh URIs for the simulator without editing the source."""
+    tree = ET.parse(path)
+    meshes = list(tree.iter('mesh'))
+    if not any(mesh.get('filename', '').startswith('package://') for mesh in meshes):
+        return path
+    out = ROOT / 'isaaclab_migration/.cache' / path.stem / 'urdf' / path.name
+    out.parent.mkdir(parents=True, exist_ok=True)
+    for mesh in meshes:
+        mesh.set('filename', str(_urdf_mesh_path(path, mesh.attrib['filename'])))
+    for joint in tree.findall("joint[@type='fixed']"):
+        axis = joint.find('axis')
+        if axis is not None:
+            joint.remove(axis)  # A fixed joint has no rotation axis.
+    content = ET.tostring(tree.getroot(), encoding='utf-8', xml_declaration=True)
+    if not out.exists() or out.read_bytes() != content:
+        from tempfile import NamedTemporaryFile
+
+        with NamedTemporaryFile(dir=out.parent, delete=False) as tmp:
+            tmp.write(content)
+        Path(tmp.name).replace(out)
     return out

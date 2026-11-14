@@ -57,8 +57,10 @@ class HIMCore(LegacyLogic):
 
     def _reset_dofs(self,ids):
         # Legacy reset ignores randomize_initial_joint_pos and its configured range.
-        q=self.default_dof_pos*torch_rand_float(.5,1.5,(len(ids),self.num_dof),self.device)
-        if self.backend.cfg.stage==1: q=self.default_dof_pos.expand(len(ids),-1).clone()
+        if self.backend.cfg.stage == 1 or getattr(self.cfg.init_state, 'reset_at_nominal_pose', False):
+            q = self.default_dof_pos.expand(len(ids), -1).clone()
+        else:
+            q = self.default_dof_pos * torch_rand_float(.5, 1.5, (len(ids), self.num_dof), self.device)
         self.dof_pos[ids]=q; self.dof_vel[ids]=0.
         self.backend.robot.write_joint_state_to_sim(q,torch.zeros_like(q),joint_ids=self.backend.joint_ids,env_ids=ids)
 
@@ -67,8 +69,10 @@ class HIMCore(LegacyLogic):
         self.root_states[ids,:3]+=self.env_origins[ids]
         if self.custom_origins:
             self.root_states[ids,:2]+=torch_rand_float(-1.,1.,(len(ids),2),self.device)
-        self.root_states[ids,7:13]=torch_rand_float(-.5,.5,(len(ids),6),self.device)
-        if self.backend.cfg.stage==1:self.root_states[ids,7:13]=0.
+        if self.backend.cfg.stage == 1:
+            self.root_states[ids,7:13] = 0.
+        elif not getattr(self.cfg.init_state, 'reset_at_nominal_pose', False):
+            self.root_states[ids,7:13] = torch_rand_float(-.5, .5, (len(ids), 6), self.device)
         self.backend.write_root(self.root_states[ids],ids)
 
     def refresh_actor_rigid_shape_props(self,ids):

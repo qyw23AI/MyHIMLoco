@@ -76,16 +76,24 @@ def main():
     parser.add_argument('--seeds', type=int, nargs='+', default=[17])
     parser.add_argument('--eval_envs', type=int, default=32)
     parser.add_argument('--eval_seconds', type=float, default=8.)
-    parser.add_argument('--train_timeout', type=int, default=3600)
+    parser.add_argument('--train_timeout', type=int, default=0,
+                        help='Training timeout in seconds; 0 disables the training timeout.')
     parser.add_argument('--eval_timeout', type=int, default=600)
     parser.add_argument('--record_timeout', type=int, default=300)
+    parser.add_argument('--resume-after', choices=ARMS,
+                        help='Resume a non-empty output after this already-run arm; never reruns earlier arms.')
+    parser.add_argument('--resume-partial-arm', choices=ARMS,
+                        help='Continue a timed-out arm from its newest model_N.pt, then run later arms.')
     args = parser.parse_args()
+    if args.resume_after and args.resume_partial_arm:
+        parser.error('Use only one of --resume-after or --resume-partial-arm')
     if min(args.num_envs, args.rollout_steps, args.iterations, args.eval_envs) < 1:
         parser.error('environment, rollout, iteration and evaluation counts must be positive')
     if not args.seeds or len(set(args.seeds)) != len(args.seeds):
         parser.error('seeds must be unique and nonempty')
     output = args.output.resolve()
-    if output.exists() and any(output.iterdir()):
+    resume_mode = args.resume_after or args.resume_partial_arm
+    if output.exists() and any(output.iterdir()) and not resume_mode:
         parser.error(f'Output directory is not empty; refusing to overwrite: {output}')
     output.mkdir(parents=True, exist_ok=True)
     plan = dict(
@@ -101,7 +109,17 @@ def main():
         preserved_between_arms=['URDF/assets', 'phase/activation observations', 'gait reference/controller',
                                 'commands', 'domain randomization', 'PPO parameters', 'training budget'],
         interpretation_limit='This isolates reward scales within task-gait structure. It does not isolate phase/reference-controller structure from the legacy reward source.')
-    write_json(output / 'experiment_plan.json', plan)
+    plan_path = output / 'experiment_plan.json'
+    if resume_mode:
+        if not plan_path.is_file():
+            parser.error(f'Cannot resume without existing experiment plan: {plan_path}')
+        existing_plan = json.loads(plan_path.read_text())
+        for key in ('comparison', 'task', 'phase', 'source_checkpoint', 'arms', 'seeds',
+                    'num_envs', 'rollout_steps', 'iterations', 'eval_envs', 'eval_seconds'):
+            if existing_plan.get(key) != plan.get(key):
+                parser.error(f'Resume plan mismatch for {key}: {existing_plan.get(key)!r} != {plan.get(key)!r}')
+    else:
+        write_json(plan_path, plan)
     env = dict(os.environ)
     env['PYTHONPATH'] = f'{ROOT / "isaaclab_migration"}:{ROOT / "rsl_rl"}' + (
         ':' + env['PYTHONPATH'] if env.get('PYTHONPATH') else '')
@@ -110,6 +128,94 @@ def main():
     env['MPLCONFIGDIR'] = str(output / 'matplotlib_cache')
     status = dict(state='running', current_arm=None, current_seed=None,
                   operation=None, completed=[], results={})
+
+    start_index = 0
+    partial_checkpoint = None
+    partial_iteration = None
+    if resume_mode:
+        boundary_arm = args.resume_after or ARMS[ARMS.index(args.resume_partial_arm) - 1]
+        start_index = (ARMS.index(args.resume_partial_arm) if args.resume_partial_arm
+                       else ARMS.index(args.resume_after) + 1)
+        if start_index >= len(ARMS):
+            parser.error('Selected resume point has no remaining arms to run')
+        # Recover the completed baseline's metrics directly from its preserved output.
+        # The previous driver failed only because task_gait_eval writes its console to
+        # evaluation_outer.log, not evaluation/console.log.
+        prior_status_path = output / 'status.json'
+        if prior_status_path.is_file():
+            previous_status = json.loads(prior_status_path.read_text())
+            expected_current_arm = args.resume_partial_arm or args.resume_after
+            if previous_status.get('current_arm') != expected_current_arm:
+                parser.error(f"Existing status does not identify {expected_current_arm} as the interrupted arm")
+        for seed in args.seeds:
+            prior_folder = output / boundary_arm / f'seed_{seed}'
+            prior_training = prior_folder / 'train'
+            prior_eval = prior_folder / 'evaluation'
+            prior_checkpoint = prior_training / f'model_{args.iterations}.pt'
+            prior_validation = prior_training / 'validation.json'
+            prior_console = prior_training / 'console.log'
+            prior_evaluation = prior_eval / 'evaluation.json'
+            prior_eval_log = prior_folder / 'evaluation_outer.log'
+            if not all(p.is_file() for p in (prior_checkpoint, prior_validation, prior_console,
+                                              prior_evaluation, prior_eval_log)):
+                parser.error(f'Cannot resume: preserved outputs are incomplete under {prior_folder}')
+            if 'RUN_COMPLETED ' not in prior_console.read_text(errors='replace'):
+                parser.error(f'Cannot resume: prior training completion marker is missing: {prior_console}')
+            if json.loads(prior_validation.read_text()).get('status') != 'passed':
+                parser.error(f'Cannot resume: prior training validation did not pass: {prior_validation}')
+            if 'EVALUATION_SAVED ' not in prior_eval_log.read_text(errors='replace'):
+                parser.error(f'Cannot resume: prior evaluation completion marker is missing: {prior_eval_log}')
+            prior_eval_json = json.loads(prior_evaluation.read_text())
+            if prior_eval_json.get('seed') != seed or prior_eval_json.get('status') != 'execution_validated_not_performance_approved':
+                parser.error(f'Cannot resume: evaluation seed mismatch: {prior_evaluation}')
+            status['results'].setdefault(boundary_arm, {})[str(seed)] = compact(prior_eval_json)
+            status['completed'].append(dict(
+                arm=boundary_arm, seed=seed, training=str(prior_training),
+                checkpoint=str(prior_checkpoint), evaluation=str(prior_evaluation),
+                video=None, video_note='not recorded before the prior workflow stopped at log verification'))
+        if args.resume_partial_arm:
+            partial_folder = output / args.resume_partial_arm / f'seed_{args.seeds[0]}'
+            partial_train = partial_folder / 'train'
+            if len(args.seeds) != 1:
+                parser.error('Partial-arm resume currently requires exactly one seed')
+            partial_status = json.loads((output / 'status.json').read_text())
+            previous_pid = partial_status.get('child_pid')
+            active_child = bool(previous_pid and Path(f'/proc/{previous_pid}').exists())
+            stale_running_state = partial_status.get('state') == 'running' and not active_child
+            if not str(partial_status.get('failure', '')).startswith(('TimeoutExpired:', 'RuntimeError:')) and not stale_running_state:
+                parser.error('Partial-arm resume requires a recorded failure or a stale running status with no live child process')
+            if active_child:
+                parser.error(f'Refusing to resume while recorded child PID {previous_pid} is still alive')
+            candidates = []
+            for item in partial_train.glob('model_*.pt'):
+                if item.stem.startswith('model_latest_'):
+                    continue
+                try:
+                    candidates.append((int(item.stem.removeprefix('model_')), item))
+                except ValueError:
+                    continue
+            if not candidates:
+                parser.error(f'No permanent model_N.pt checkpoint found in {partial_train}')
+            partial_iteration, partial_checkpoint = max(candidates, key=lambda pair: pair[0])
+            import torch
+            checkpoint_payload = torch.load(partial_checkpoint, map_location='cpu', weights_only=True)
+            checkpoint_iteration = int(checkpoint_payload['iter'])
+            checkpoint_payload.clear()
+            if checkpoint_iteration >= args.iterations:
+                parser.error(f'Latest partial checkpoint is already at iteration {checkpoint_iteration}')
+            partial_iteration = checkpoint_iteration
+            partial_console = partial_train / 'console.log'
+            if not partial_console.is_file() or 'TRAINING_COMPLETE ' in partial_console.read_text(errors='replace'):
+                parser.error(f'Partial training log is missing or already completed: {partial_console}')
+            status['partial_training'] = dict(
+                arm=args.resume_partial_arm, seed=args.seeds[0],
+                original_training=str(partial_train), checkpoint=str(partial_checkpoint),
+                checkpoint_iteration=partial_iteration,
+                additional_iterations=args.iterations - partial_iteration,
+                checkpoint_file_iteration=int(partial_checkpoint.stem.removeprefix('model_')))
+        status['resumed_after'] = boundary_arm
+        status['resumed_partial_arm'] = args.resume_partial_arm
+        status['operation'] = 'resuming_from_preserved_checkpoint' if args.resume_partial_arm else 'resuming_after_preserved_completed_arm'
 
     def update():
         status['updated_at'] = datetime.datetime.now(datetime.timezone.utc).isoformat()
@@ -124,14 +230,14 @@ def main():
                                      stderr=subprocess.STDOUT, start_new_session=True, bufsize=0)
             status['child_pid'] = child.pid
             update()
-            deadline = time.monotonic() + timeout
+            deadline = None if timeout is None else time.monotonic() + timeout
             fd = child.stdout.fileno()
             try:
                 while True:
-                    remaining = deadline - time.monotonic()
-                    if remaining <= 0:
+                    remaining = None if timeout is None else deadline - time.monotonic()
+                    if remaining is not None and remaining <= 0:
                         raise subprocess.TimeoutExpired(command, timeout)
-                    readable, _, _ = select.select([fd], [], [], min(1., remaining))
+                    readable, _, _ = select.select([fd], [], [], 1. if remaining is None else min(1., remaining))
                     if readable:
                         chunk = os.read(fd, 65536)
                         if not chunk:
@@ -167,25 +273,40 @@ def main():
 
     try:
         for arm in ARMS:
-            status['results'][arm] = {}
+            status['results'].setdefault(arm, {})
         for seed in args.seeds:
-            for arm in ARMS:
+            for arm in ARMS[start_index:]:
                 status['current_arm'], status['current_seed'] = arm, seed
                 folder = output / arm / f'seed_{seed}'
-                training = folder / 'train'
+                continuing_partial = args.resume_partial_arm == arm
+                continuation_suffix = ''
+                training_name = f'train_from_{partial_iteration}'
+                if continuing_partial:
+                    retry = 0
+                    while ((folder / training_name).exists() or
+                           (folder / f'train_from_checkpoint_outer{continuation_suffix}.log').exists()):
+                        retry += 1
+                        continuation_suffix = f'_retry{retry}'
+                        training_name = f'train_from_{partial_iteration}{continuation_suffix}'
+                training = folder / (training_name if continuing_partial else 'train')
                 evaluation = folder / 'evaluation'
                 training.mkdir(parents=True, exist_ok=False)
-                status['operation'] = 'training_from_random_initialization'
+                status['operation'] = 'continuing_partial_training' if continuing_partial else 'training_from_random_initialization'
                 update()
                 command = ['bash', 'isaaclab_migration/scripts/task_gait.sh', 'train',
                            '--no-videos', '--phase', 'precision',
                            '--posture_experiment', arm, '--num_envs', str(args.num_envs),
-                           '--rollout_steps', str(args.rollout_steps), '--iterations', str(args.iterations),
-                           '--seed', str(seed), '--log_dir', str(training)]
+                           '--rollout_steps', str(args.rollout_steps), '--iterations',
+                           str(args.iterations - partial_iteration if continuing_partial else args.iterations),
+                           '--seed', str(seed)]
+                if continuing_partial:
+                    command.extend(['--checkpoint', str(partial_checkpoint)])
+                command.extend(['--log_dir', str(training)])
                 # task_gait.sh creates the training directory; remove this empty placeholder only
                 # after reserving the path, then refuse any unexpected pre-existing output.
                 training.rmdir()
-                run(command, folder / 'train_outer.log', args.train_timeout, 'training')
+                run(command, folder / (f'train_from_checkpoint_outer{continuation_suffix}.log' if continuing_partial else 'train_outer.log'),
+                    args.train_timeout if args.train_timeout > 0 else None, 'training')
                 console = (training / 'console.log').read_text()
                 validation = json.loads((training / 'validation.json').read_text())
                 if 'RUN_COMPLETED ' not in console or validation.get('status') != 'passed':
@@ -200,7 +321,8 @@ def main():
                            '--seconds', str(args.eval_seconds), '--num_envs', str(args.eval_envs),
                            '--seed', str(seed), '--output', str(evaluation), '--headless']
                 run(command, folder / 'evaluation_outer.log', args.eval_timeout, 'fixed_evaluation')
-                eval_console = (evaluation / 'console.log').read_text()
+                eval_log = folder / 'evaluation_outer.log'
+                eval_console = eval_log.read_text(errors='replace')
                 evaluation_json = json.loads((evaluation / 'evaluation.json').read_text())
                 if 'EVALUATION_SAVED ' not in eval_console:
                     raise RuntimeError(f'Evaluation verification failed: {evaluation}')

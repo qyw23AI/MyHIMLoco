@@ -8,7 +8,7 @@ from isaaclab.envs import DirectRLEnvCfg
 from isaaclab.scene import InteractiveSceneCfg
 from isaaclab.sensors import ContactSensorCfg
 from isaaclab.utils import configclass
-from .config import ROOT, asset_contract, prepare_mjcf
+from .config import ROOT, asset_contract, prepare_mjcf, prepare_urdf
 
 @configclass
 class HIMEnvCfg(DirectRLEnvCfg):
@@ -36,6 +36,8 @@ def make_env_cfg(legacy, stage=3, device='cuda:0'):
     c.state_space=legacy.env.num_privileged_obs
     c.scene.num_envs=legacy.env.num_envs; c.scene.env_spacing=legacy.env.env_spacing
     c.sim.dt=legacy.sim.dt; c.sim.device=device; c.sim.render_interval=c.decimation
+    if legacy.asset.name == 'a1' and legacy.env.num_envs >= 4096:
+        c.sim.physx.gpu_collision_stack_size=2**28
     c.sim.gravity=tuple(legacy.sim.gravity)
     c.sim.physx.solver_type=legacy.sim.physx.solver_type
     c.sim.physx.bounce_threshold_velocity=legacy.sim.physx.bounce_threshold_velocity
@@ -50,7 +52,7 @@ def make_env_cfg(legacy, stage=3, device='cuda:0'):
     q=legacy.init_state.rot
     c.robot=ArticulationCfg(
         prim_path='/World/envs/env_.*/Robot',
-        spawn=sim_utils.UrdfFileCfg(asset_path=str(path),
+        spawn=sim_utils.UrdfFileCfg(asset_path=str(prepare_urdf(path) if path.suffix == '.urdf' else path),
             usd_dir=str(ROOT/'isaaclab_migration/.cache'/path.stem),
             make_instanceable=False,fix_base=legacy.asset.fix_base_link,merge_fixed_joints=legacy.asset.collapse_fixed_joints,
             root_link_name=root_link,activate_contact_sensors=True,

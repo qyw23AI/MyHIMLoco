@@ -81,6 +81,7 @@ class HIMActorCritic(nn.Module):
                         critic_hidden_dims=[512, 256, 128],
                         activation='elu',
                         init_noise_std=1.0,
+                        num_prototype=32,
                         **kwargs):
         if kwargs:
             print("ActorCritic.__init__ got unexpected arguments, which will be ignored: " + str([key for key in kwargs.keys()]))
@@ -97,7 +98,8 @@ class HIMActorCritic(nn.Module):
         mlp_input_dim_c = num_critic_obs
 
         # Estimator
-        self.estimator = HIMEstimator(temporal_steps=self.history_size, num_one_step_obs=num_one_step_obs)
+        self.estimator = HIMEstimator(temporal_steps=self.history_size, num_one_step_obs=num_one_step_obs,
+                                      num_prototype=num_prototype)
 
         # Policy
         actor_layers = []

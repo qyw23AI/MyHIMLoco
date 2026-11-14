@@ -130,24 +130,42 @@ class HIMLabEnv(DirectRLEnv):
         self.robot.write_root_pose_to_sim(pose,env_ids=ids)
         self.robot.write_root_velocity_to_sim(state[:,7:13],env_ids=ids)
 
-    def randomize_body_properties(self,c):
+    def randomize_body_properties(self,c,ids=None):
         view=self.robot.root_physx_view
-        ids=torch.arange(self.num_envs,dtype=torch.int32,device='cpu')
-        masses=view.get_masses().clone(); original=masses.clone()
-        base=c.base_body_id
-        if c.cfg.domain_rand.randomize_payload_mass:masses[:,base]+=c.payload[:,0].cpu()
+        if not hasattr(self, '_nominal_masses'):
+            self._nominal_masses=view.get_masses().clone()
+            self._nominal_inertias=view.get_inertias().clone()
+            self._nominal_coms=view.get_coms().clone()
+        ids=(torch.arange(self.num_envs,device='cpu') if ids is None else ids.to('cpu')).long()
+        cpu_ids=ids.to(dtype=torch.int32)
+        masses=self._nominal_masses[ids].clone(); original=self._nominal_masses[ids]
+        # A1 URDF has a massless virtual `base` parent; the physical base is `trunk`.
+        base=(c.body_names.index('trunk') if c.cfg.asset.name == 'a1'
+              and 'trunk' in c.body_names else c.base_body_id)
+        if getattr(c.cfg.domain_rand, 'randomize_body_mass', False):
+            factors=np.random.uniform(*c.cfg.domain_rand.body_mass_range,len(ids))
+            masses[:,base]*=torch.tensor(factors,dtype=masses.dtype)
+        if c.cfg.domain_rand.randomize_payload_mass:masses[:,base]+=c.payload[ids.to(c.device),0].cpu()
         if c.cfg.domain_rand.randomize_link_mass:
             others=[i for i in range(c.num_bodies) if i!=base]
-            factors=np.random.uniform(*c.cfg.domain_rand.link_mass_range,(c.num_envs,len(others)))
+            factors=np.random.uniform(*c.cfg.domain_rand.link_mass_range,(len(ids),len(others)))
             masses[:,others]*=torch.tensor(factors,dtype=masses.dtype)
-        if (masses<=0).any():raise ValueError('Domain randomization produced nonpositive link mass')
-        view.set_masses(masses,ids)
-        inertia=view.get_inertias().clone()
+        if (masses<=0).any():
+            raise ValueError(f'Domain randomization produced nonpositive link mass: '
+                             f'minimum={float(masses.min())}, base_nominal={float(original[:,base].min())}')
+        all_masses=view.get_masses().clone()
+        all_masses[ids]=masses
+        view.set_masses(all_masses,cpu_ids)
+        inertia=self._nominal_inertias[ids].clone()
         inertia *= (masses/original).unsqueeze(-1)
-        view.set_inertias(inertia,ids)
+        all_inertias=view.get_inertias().clone()
+        all_inertias[ids]=inertia
+        view.set_inertias(all_inertias,cpu_ids)
         if c.cfg.domain_rand.randomize_com_displacement:
-            com=view.get_coms().clone(); com[:,base,:3]=c.com_displacement.cpu()
-            view.set_coms(com,ids)
+            com=self._nominal_coms[ids].clone(); com[:,base,:3]=c.com_displacement[ids.to(c.device)].cpu()
+            all_coms=view.get_coms().clone()
+            all_coms[ids]=com
+            view.set_coms(all_coms,cpu_ids)
 
     def randomize_material(self,c,ids):
         if c.cfg.domain_rand.randomize_friction:
